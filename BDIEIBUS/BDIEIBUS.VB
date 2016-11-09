@@ -96,7 +96,7 @@ Public Class CLDIEIBUS
         End Select
 
         Return RetValue
- 
+
     End Function
 
     Public Overridable Function DecodeDBValue(ByVal Contesto As String, ByVal Campo As String, ByRef Valore As String) As Boolean
@@ -687,10 +687,13 @@ Public Class CLDIEIBUS
         Dim dttOut As New DataTable
 
         Try
+            ' In Business le note dei leads non sono in una tabella di dettaglio sulla tabella principale.
+            ' Inserire una nota equivale quindi a fare un update e non una insert
 
             strSQL = String.Format("select le_note2 from leads where codditt = {0} and le_codlead = {1}", CStrSQL(strDitta), t.cod_lead)
             dttOut = OpenRecordset(strSQL, CLE__APP.DBTIPO.DBAZI)
             If dttOut.Rows.Count = 1 Then
+
                 TestoNota = String.Format("{0}{1}{1}***Nota {4} del {2}***{1}{3}", _
                                           dttOut.Rows(0)("le_note2"), _
                                           vbCrLf, _
@@ -698,6 +701,7 @@ Public Class CLDIEIBUS
                                           t.nota, _
                                           t.cod_operatore _
                                           )
+
             End If
 
             strSQL = String.Format("update leads set le_note2 = {0} where codditt = {1} and le_codlead = {2}", _
@@ -1148,6 +1152,7 @@ Public Class CLDIEIBUS
 
 #Region "Import da tracciati"
 
+    <Obsolete("Questo metodo è deprecato, usare InsertLeadData")> _
     Public Overridable Function InsertLead(ByVal strDitta As String, ByVal dRow As DataRow, ByRef CodLead As Integer) As Boolean
         Dim strSQL As String = ""
 
@@ -1276,6 +1281,7 @@ Public Class CLDIEIBUS
         End Try
     End Function
 
+    <Obsolete("Questo metodo è deprecato, usare InsertLeadNoteData")> _
     Public Overridable Function InsertLeadNote(ByVal strDitta As String, ByVal dRow As DataRow, ByRef CodLead As Integer) As Boolean
 
         Dim strSQL As String = ""
@@ -1368,6 +1374,7 @@ Public Class CLDIEIBUS
         End Try
     End Function
 
+    <Obsolete("Questo metodo è deprecato, usare InsertCliforTabNoteData")> _
     Public Overridable Function InsertCliforTabNote(ByVal strDitta As String, ByVal strConto As String, ByVal strProgressivo As String, _
                                                  ByVal strTitolo As String, ByVal strNote As String) As Boolean
         Dim strSQL As String = ""
@@ -1403,6 +1410,7 @@ Public Class CLDIEIBUS
         End Try
     End Function
 
+    <Obsolete("Questo metodo è deprecato, usare UpdateCliforTabNoteData")> _
     Public Overridable Function UpdateCliforTabNote(ByVal strDitta As String, ByVal strConto As String, ByVal strProgressivo As String, _
                                           ByVal strTitolo As String, ByVal strNote As String) As Boolean
         Dim strSQL As String = ""
@@ -1464,6 +1472,7 @@ Public Class CLDIEIBUS
         End Try
     End Function
 
+    <Obsolete("Questo metodo è deprecato, usare UpdateCliforNoteData")> _
     Public Overridable Function UpdateCliforNote(ByVal strDitta As String, ByVal strConto As String, ByVal strNote As String, ByVal strTitolo As String) As Boolean
         Dim strSQL As String = ""
         Try

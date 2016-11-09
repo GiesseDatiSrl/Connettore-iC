@@ -235,6 +235,47 @@ Public Class CLEIEIBUS
         Return True
     End Function
 
+
+    Public Overridable Function SaveDatatableToFile(ByVal dttTmp As DataTable, ByVal FileName As String) As Boolean
+        Dim RetVal As Boolean = False
+
+        Try
+
+            Using textWriter As TextWriter = File.CreateText(FileName)
+                Using csv As CsvHelper.CsvWriter = New CsvHelper.CsvWriter(textWriter)
+                    csv.Configuration.Delimiter = "|"
+                    csv.Configuration.Encoding = Encoding.UTF8
+
+                    ' Write columns
+                    For Each column As DataColumn In dttTmp.Columns
+                        csv.WriteField(column.ColumnName)
+                    Next
+                    csv.NextRecord()
+
+                    ' Write row values
+                    For Each row As DataRow In dttTmp.Rows
+                        For i As Integer = 0 To dttTmp.Columns.Count - 1
+                            csv.WriteField(row(i))
+                        Next
+                        csv.NextRecord()
+                    Next
+                End Using
+            End Using
+
+            RetVal = True
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            If GestErrorCallThrow() Then
+                Throw New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False))
+            Else
+                ThrowRemoteEvent(New NTSEventArgs("", GestError(ex, Me, "", oApp.InfoError, "", False)))
+            End If
+            '--------------------------------------------------------------	
+        End Try
+
+        Return RetVal
+    End Function
+
     Public Overridable Function CopyIfDifferent(ByVal Origine As String, ByVal Destinazione As String) As Boolean
         ' Da testare
         Dim infoOr As FileInfo
@@ -1250,7 +1291,7 @@ Public Class CLEIEIBUS
                 ThrowRemoteEvent(New NTSEventArgs("", GestError(ex, Me, "", oApp.InfoError, "", False)))
             End If
             '--------------------------------------------------------------	
-  
+
         End Try
 
     End Function
@@ -2062,39 +2103,40 @@ Public Class CLEIEIBUS
         'esporta tutti i comuni
         Dim dttTmp As New DataTable
         Dim sbFile As New StringBuilder
+
         Try
             If Not oCldIbus.GetLeadAccessi(strDittaCorrente, dttTmp, strCustomWhereGetLeadAccessi) Then Return False
 
-            sbFile.Append(
-                "CHIAVE           |" & _
-                "COD_DITTA        |" & _
-                "COD_OPERATORE    |" & _
-                "COD_LEAD         |" & _
-                "FLG_VISUALIZZA   |" & _
-                "FLG_MODIFICA     |" & _
-                "DAT_ULT_MOD       " & _
-                vbCrLf).Replace(" ", "")
 
-            For Each dtrT As DataRow In dttTmp.Rows
+            Using textWriter As TextWriter = File.CreateText(strFileOut)
+                Using csv As CsvHelper.CsvWriter = New CsvHelper.CsvWriter(textWriter)
+                    csv.Configuration.Delimiter = "|"
+                    csv.Configuration.Encoding = Encoding.UTF8
 
-                sbFile.Append(
-                            ConvStr(dtrT!xx_chiave) & "|" & _
-                            strDittaCorrente & "|" & _
-                            ConvStr(dtrT!opcr_opnome) & "|" & _
-                            ConvStr(dtrT!opcr_codlead) & "|" & _
-                            ConvStr(dtrT!opcr_crmvis) & "|" & _
-                            ConvStr(dtrT!opcr_crmmod) & "|" & _
-                            ConvData(dtrT!xx_ultagg, True) & vbCrLf)
+                    csv.WriteField("CHIAVE")
+                    csv.WriteField("COD_DITTA")
+                    csv.WriteField("COD_OPERATORE")
+                    csv.WriteField("COD_LEAD")
+                    csv.WriteField("FLG_VISUALIZZA")
+                    csv.WriteField("FLG_MODIFICA")
+                    csv.WriteField("DAT_ULT_MOD")
+                    csv.NextRecord()
 
-            Next
+                    ' Write row values
+                    For Each dtrT As DataRow In dttTmp.Rows
 
-            If dttTmp.Rows.Count > 0 Then
-                Dim w1 As New StreamWriter(strFileOut, False, System.Text.Encoding.UTF8)
-                w1.Write(sbFile.ToString)
-                w1.Flush()
-                w1.Close()
-            End If
-
+                        csv.WriteField(ConvStr(dtrT!xx_chiave))
+                        csv.WriteField(strDittaCorrente)
+                        csv.WriteField(ConvStr(dtrT!opcr_opnome))
+                        csv.WriteField(ConvStr(dtrT!opcr_codlead))
+                        csv.WriteField(ConvStr(dtrT!opcr_crmvis))
+                        csv.WriteField(ConvStr(dtrT!opcr_crmmod))
+                        csv.WriteField(ConvData(dtrT!xx_ultagg, True))
+                
+                        csv.NextRecord()
+                    Next
+                End Using
+            End Using
 
             Return True
 
@@ -2111,6 +2153,7 @@ Public Class CLEIEIBUS
             dttTmp.Dispose()
         End Try
     End Function
+
 
     Public Overridable Function Elabora_ExportLeadAccessiCrm(ByVal strFileOut As String) As Boolean
         'esporta tutti i comuni
@@ -3998,22 +4041,24 @@ Public Class CLEIEIBUS
         Dim NewCodCli As Integer
         Dim NewCodDest As Integer
 
-        Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "order_id", "0"))
-
-        ' TODO:  Togliere 
-        'LastStoredID = 344
-
-        ' Istanzio l'oggetto Export dell'AMHelper
-        Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
-
-        If eProxyUrl <> "" Then
-            ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
-        End If
-
-        Dim OrdersData As ws_rec_orders = Nothing
-        Dim RetVal As Boolean = ed.exp_orders(LastStoredID, OrdersData)
-
         Try
+
+            Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "order_id", "0"))
+
+            ' TODO:  Togliere 
+            'LastStoredID = 344
+
+            ' Istanzio l'oggetto Export dell'AMHelper
+            Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
+
+            If eProxyUrl <> "" Then
+                ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
+            End If
+
+            Dim OrdersData As ws_rec_orders = Nothing
+            Dim RetVal As Boolean = ed.exp_orders(LastStoredID, OrdersData)
+
+
             If RetVal AndAlso OrdersData IsNot Nothing Then
 
                 For Each t As TestataOrdineExport In OrdersData.testate
@@ -4098,22 +4143,24 @@ Public Class CLEIEIBUS
         ' Variabili di uso locale
         Dim msg As String = ""
 
-        Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "anagra_id", "0"))
-
-        ' TODO:  Togliere 
-        'LastStoredID = 30
-
-        ' Istanzio l'oggetto Export dell'AMHelper
-        Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
-
-        If eProxyUrl <> "" Then
-            ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
-        End If
-
-        Dim CliforData As ws_rec_clifor = Nothing
-        Dim RetVal As Boolean = ed.exp_clifor(LastStoredID, CliforData)
-
         Try
+
+            Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "anagra_id", "0"))
+
+            ' TODO:  Togliere 
+            'LastStoredID = 30
+
+            ' Istanzio l'oggetto Export dell'AMHelper
+            Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
+
+            If eProxyUrl <> "" Then
+                ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
+            End If
+
+            Dim CliforData As ws_rec_clifor = Nothing
+            Dim RetVal As Boolean = ed.exp_clifor(LastStoredID, CliforData)
+
+
             If RetVal AndAlso CliforData IsNot Nothing Then
 
                 For Each t As TestataCf In CliforData.clienti
@@ -4173,22 +4220,24 @@ Public Class CLEIEIBUS
         ' Variabili di uso locale
         Dim msg As String = ""
 
-        Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "anagra_note_id", "0"))
-
-        ' TODO:  Togliere 
-        ' LastStoredID = 30
-
-        ' Istanzio l'oggetto Export dell'AMHelper
-        Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
-
-        If eProxyUrl <> "" Then
-            ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
-        End If
-
-        Dim CliforNoteData As ws_rec_clifor_note = Nothing
-        Dim RetVal As Boolean = ed.exp_clifor_note(LastStoredID, CliforNoteData)
-
         Try
+
+            Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "anagra_note_id", "0"))
+
+            ' TODO:  Togliere 
+            ' LastStoredID = 30
+
+            ' Istanzio l'oggetto Export dell'AMHelper
+            Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
+
+            If eProxyUrl <> "" Then
+                ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
+            End If
+
+            Dim CliforNoteData As ws_rec_clifor_note = Nothing
+            Dim RetVal As Boolean = ed.exp_clifor_note(LastStoredID, CliforNoteData)
+
+
             If RetVal AndAlso CliforNoteData IsNot Nothing Then
 
                 For Each t As TestataCfNote In CliforNoteData.note
@@ -4289,22 +4338,24 @@ Public Class CLEIEIBUS
         Dim msg As String = ""
         Dim CodLead As Integer
 
-        Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "lead_id", "0"))
-
-        ' TODO:  Togliere 
-        ' LastStoredID = 30
-
-        ' Istanzio l'oggetto Export dell'AMHelper
-        Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
-
-        If eProxyUrl <> "" Then
-            ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
-        End If
-
-        Dim LeadsData As ws_rec_leads = Nothing
-        Dim RetVal As Boolean = ed.exp_leads(LastStoredID, LeadsData)
-
         Try
+
+            Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "lead_id", "0"))
+
+            ' TODO:  Togliere 
+            ' LastStoredID = 30
+
+            ' Istanzio l'oggetto Export dell'AMHelper
+            Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
+
+            If eProxyUrl <> "" Then
+                ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
+            End If
+
+            Dim LeadsData As ws_rec_leads = Nothing
+            Dim RetVal As Boolean = ed.exp_leads(LastStoredID, LeadsData)
+
+
             If RetVal AndAlso LeadsData IsNot Nothing Then
 
                 For Each t As TestataLeadsExport In LeadsData.leads
@@ -4366,23 +4417,24 @@ Public Class CLEIEIBUS
         'Dim strAppManagerAPI As String = "http://test.apexnet.it/appmanager/api/v1/progetti/iorder.test2"
         'Dim strAuthKey As String = "E24EFDA3-9878-42D8-90FE-C00F847FE434"  ' String di autenticazione
         'Dim strMastro As Integer = 401
-
-        Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "lead_note_id", "0"))
-
-        ' TODO:  Togliere 
-        ' LastStoredID = 30
-
-        ' Istanzio l'oggetto Export dell'AMHelper
-        Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
-
-        If eProxyUrl <> "" Then
-            ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
-        End If
-
-        Dim LeadNoteData As ws_rec_leads_note = Nothing
-        Dim RetVal As Boolean = ed.exp_leads_note(LastStoredID, LeadNoteData)
-
         Try
+
+            Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "lead_note_id", "0"))
+
+            ' TODO:  Togliere 
+            ' LastStoredID = 30
+
+            ' Istanzio l'oggetto Export dell'AMHelper
+            Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
+
+            If eProxyUrl <> "" Then
+                ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
+            End If
+
+            Dim LeadNoteData As ws_rec_leads_note = Nothing
+            Dim RetVal As Boolean = ed.exp_leads_note(LastStoredID, LeadNoteData)
+
+
             If RetVal AndAlso LeadNoteData IsNot Nothing Then
 
                 For Each t As TestataLeadsNoteExport In LeadNoteData.note

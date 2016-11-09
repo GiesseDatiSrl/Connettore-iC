@@ -175,6 +175,10 @@ Public Class FRMBUSNET
       Return
     End Try
 
+
+
+
+
     'imposto la dir in bn__std
     strProfilo = CheckBusProfilo(Command, False)
     DirP = oStd.GetSettingReg("Business", strProfilo, "Dir", "")
