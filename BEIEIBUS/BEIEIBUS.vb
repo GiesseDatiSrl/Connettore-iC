@@ -2,11 +2,12 @@ Imports System.Data
 Imports NTSInformatica.CLN__STD
 Imports System.Text
 Imports System.IO
+Imports System.Management
 Imports AMHelper.WS
 Imports AMHelper.CSV
 Imports RestSharpApex
 Imports ApexNetLIB
-Imports System.Management
+Imports CsvHelper
 
 
 Public Class CLEIEIBUS
@@ -125,6 +126,7 @@ Public Class CLEIEIBUS
     Public strCustomWhereGetCliforAge As String = ""
     Public strCustomWhereGetCliforBlo As String = ""
     Public strCustomWhereGetPorto As String = ""
+    Public strCustomWhereGetTipiAttivita As String = ""
     Public strCustomWhereGetCliforCate As String = ""
     Public strCustomWhereGetCliforDestdiv As String = ""
     Public strCustomWhereGetCliforDettCon As String = ""
@@ -148,6 +150,7 @@ Public Class CLEIEIBUS
     Public strCustomWhereGetLeadNote As String = ""
     Public strCustomWhereGetLeadRighOff As String = ""
     Public strCustomWhereGetLeads As String = ""
+    Public strCustomWhereGetAttivita As String = ""
     Public strCustomWhereGetLeadTestOff As String = ""
     Public strDefaultOpNome As String = "Admin"
 
@@ -192,11 +195,13 @@ Public Class CLEIEIBUS
     Public Const cIMP_CLIFOR_TESTDOC As String = "io_clifor_testdoc.dat"
     Public Const cIMP_CONDPAG As String = "io_condpag.dat"
     Public Const cIMP_PORTO As String = "io_porto.dat"
+    Public Const cIMP_TIPI_ATTIVITA As String = "io_tipi_attivita.dat"
     Public Const cIMP_CONDPAG_LANG As String = "io_condpag_lang.dat"
     Public Const cIMP_CUSTOM_FIELDS As String = "io_custom_fields.dat"
     Public Const cIMP_GIACENZE As String = "io_giacenze.dat"
     Public Const cIMP_INFO As String = "io_info.dat"
     Public Const cIMP_LEADS As String = "io_leads.dat"
+    Public Const cIMP_ATTIVITA As String = "io_attivita.dat"
     Public Const cIMP_LEAD_ACCCRM As String = "io_lead_acccrm.dat"
     Public Const cIMP_LEAD_CONCORRENTI As String = "io_lead_concorrenti.dat"
     Public Const cIMP_LEAD_ACCESSI As String = "io_lead_accessi.dat"
@@ -240,27 +245,30 @@ Public Class CLEIEIBUS
         Dim RetVal As Boolean = False
 
         Try
+            If dttTmp.Rows.Count > 0 Then
+                Dim outputEnc As Encoding = New UTF8Encoding(True)
+                Using textWriter As TextWriter = New StreamWriter(FileName, False, outputEnc)
 
-            Using textWriter As TextWriter = File.CreateText(FileName)
-                Using csv As CsvHelper.CsvWriter = New CsvHelper.CsvWriter(textWriter)
-                    csv.Configuration.Delimiter = "|"
-                    csv.Configuration.Encoding = Encoding.UTF8
+                    Using csv As CsvWriter = New CsvWriter(textWriter)
+                        csv.Configuration.Delimiter = "|"
+                        csv.Configuration.Encoding = Encoding.UTF8
 
-                    ' Write columns
-                    For Each column As DataColumn In dttTmp.Columns
-                        csv.WriteField(column.ColumnName)
-                    Next
-                    csv.NextRecord()
-
-                    ' Write row values
-                    For Each row As DataRow In dttTmp.Rows
-                        For i As Integer = 0 To dttTmp.Columns.Count - 1
-                            csv.WriteField(row(i))
+                        ' Write columns
+                        For Each column As DataColumn In dttTmp.Columns
+                            csv.WriteField(column.ColumnName)
                         Next
                         csv.NextRecord()
-                    Next
+
+                        ' Write row values
+                        For Each row As DataRow In dttTmp.Rows
+                            For i As Integer = 0 To dttTmp.Columns.Count - 1
+                                csv.WriteField(row(i))
+                            Next
+                            csv.NextRecord()
+                        Next
+                    End Using
                 End Using
-            End Using
+            End If
 
             RetVal = True
         Catch ex As Exception
@@ -399,6 +407,38 @@ Public Class CLEIEIBUS
             '--------------------------------------------------------------	
         End Try
     End Function
+    Public Overridable Function ConvOra(ByVal oIn As Object) As String
+
+        Try
+
+            If NTSCStr(oIn) <> "" And NTSCStr(oIn) <> "0" Then
+                Dim oraminuti As Decimal = ConvOra100Ora60(NTSCDec(oIn))
+                Dim Ore As Decimal = Fix(oraminuti)
+                Dim Minuti As Decimal
+
+                If Ore <> 0 Then
+                    Minuti = (oraminuti Mod Ore) * 100
+                Else
+                    Minuti = 0
+                End If
+ 
+                Return Ore.ToString("00") + ":" + Minuti.ToString("00")
+
+            Else
+                Return ""
+            End If
+
+
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            If GestErrorCallThrow() Then
+                Throw New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False))
+            Else
+                ThrowRemoteEvent(New NTSEventArgs("", GestError(ex, Me, "", oApp.InfoError, "", False)))
+            End If
+            '--------------------------------------------------------------	
+        End Try
+    End Function
 
     Public Overridable Function Elabora() As Boolean
         Dim strMsgLog As String = ""
@@ -499,6 +539,7 @@ Public Class CLEIEIBUS
             strCustomWhereGetLeadNote = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetLeadNote", "", " ", "").Trim
             strCustomWhereGetLeadRighOff = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetLeadRighOff", "", " ", "").Trim
             strCustomWhereGetLeads = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetLeads", "", " ", "").Trim
+            strCustomWhereGetAttivita = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetAttivita", "", " ", "").Trim
             strCustomWhereGetLeadTestOff = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetLeadTestOff", "", " ", "").Trim
             strCustomWhereGetCampagne = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetCampagne", "", " ", "").Trim
 
@@ -511,6 +552,7 @@ Public Class CLEIEIBUS
             strCustomWhereGetAgenti = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetAgenti", "", " ", "").Trim
             strCustomWhereGetAgentiCliente = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetAgentiCliente", "", " ", "").Trim
             strCustomWhereGetPorto = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetPorto", "", " ", "").Trim
+            strCustomWhereGetTipiAttivita = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetTipiAttivita", "", " ", "").Trim
             strCustomWhereGetScaDocPush = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "WhereGetScaDocPush", "", " ", "").Trim
 
             ' Operatore di default da usare
@@ -647,6 +689,10 @@ Public Class CLEIEIBUS
                 If Not Elabora_ExportPorto(oApp.AscDir & "\" + cIMP_PORTO) Then Return False
                 arFileGen.Add(oApp.AscDir & "\" + cIMP_PORTO)
 
+                ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Export tipi attivita..."))
+                If Not Elabora_ExportTipiAttivita(oApp.AscDir & "\" + cIMP_TIPI_ATTIVITA) Then Return False
+                arFileGen.Add(oApp.AscDir & "\" + cIMP_TIPI_ATTIVITA)
+
                 ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Export agenti..."))
                 If Not Elabora_ExportAgenti(oApp.AscDir & "\" + cIMP_AGENTI) Then Return False
                 arFileGen.Add(oApp.AscDir & "\" + cIMP_AGENTI)
@@ -724,6 +770,10 @@ Public Class CLEIEIBUS
                 ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Export Leads..."))
                 If Not Elabora_ExportLeads(oApp.AscDir & "\" + cIMP_LEADS) Then Return False
                 arFileGen.Add(oApp.AscDir & "\" + cIMP_LEADS)
+
+                ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Export attività..."))
+                If Not Elabora_ExportAttivita(oApp.AscDir & "\" + cIMP_ATTIVITA) Then Return False
+                arFileGen.Add(oApp.AscDir & "\" + cIMP_ATTIVITA)
 
                 ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Export Lead Note..."))
                 If Not Elabora_ExportLeadNote(oApp.AscDir & "\" + cIMP_LEAD_NOTE) Then Return False
@@ -1488,64 +1538,6 @@ Public Class CLEIEIBUS
         End Try
     End Function
 
-    ' Esempio di utilizzo di CSV Helper
-    'Public Overridable Function Elabora_ExportNazioniTEST(ByVal strFileOut As String) As Boolean
-
-
-    '    Dim dttTmp As New DataTable
-
-    '    Try
-    '        If Not oCldIbus.GetNazioni(dttTmp, strCustomWhereGetNazioni) Then Return False
-
-
-    '        Dim lista As New List(Of AMHelper.CSV.rec_nazioni)()
-
-    '        For Each dtrT As DataRow In dttTmp.Rows
-    '            lista.Add(New AMHelper.CSV.rec_nazioni() With {
-    '                 .CHIAVE = strDittaCorrente & "§" & ConvStr(dtrT!tb_codstat),
-    '                 .COD_DITTA = strDittaCorrente, _
-    '                 .CODICE = ConvStr(dtrT!tb_codstat),
-    '                 .DESCRIZIONE = ConvStr(dtrT!tb_desstat)
-    '        })
-
-    '        Next
-
-    '        ' Scrivo il file
-    '        Dim w1 As New StreamWriter(strFileOut, False, System.Text.Encoding.UTF8)
-
-    '        Dim writer As New CsvHelper.CsvWriter(w1)
-
-    '        writer.Configuration.Delimiter = "|"
-    '        writer.Configuration.HasHeaderRecord = True
-
-
-    '        Dim row As New AMHelper.CSV.rec_nazioni
-
-
-    '        For Each row In lista
-    '            writer.WriteField(row.CHIAVE)
-    '            writer.WriteField(row.COD_DITTA)
-    '            writer.NextRecord()
-
-    '        Next
-    '        writer.Dispose()
-
-    '        Return True
-
-    '    Catch ex As Exception
-    '        '--------------------------------------------------------------
-    '        If GestErrorCallThrow() Then
-    '            Throw New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False))
-    '        Else
-    '            ThrowRemoteEvent(New NTSEventArgs("", GestError(ex, Me, "", oApp.InfoError, "", False)))
-    '        End If
-    '        '--------------------------------------------------------------	
-    '    Finally
-    '        dttTmp.Clear()
-    '    End Try
-    'End Function
-
-
     Public Overridable Function Elabora_ExportClassiSconto(ByVal strFileOut As String) As Boolean
         'esporta tutti i comuni
         Dim dttTmp As New DataTable
@@ -1686,6 +1678,61 @@ Public Class CLEIEIBUS
                 w1.Close()
             End If
 
+
+            Return True
+
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            If GestErrorCallThrow() Then
+                Throw New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False))
+            Else
+                ThrowRemoteEvent(New NTSEventArgs("", GestError(ex, Me, "", oApp.InfoError, "", False)))
+            End If
+            '--------------------------------------------------------------	
+        Finally
+            dttTmp.Clear()
+            dttTmp.Dispose()
+        End Try
+    End Function
+
+    Public Overridable Function Elabora_ExportTipiAttivita(ByVal strFileOut As String) As Boolean
+        'esporta tutti i comuni
+        Dim dttTmp As New DataTable
+
+        Try
+            If Not oCldIbus.GetTipiAttivita(strDittaCorrente, dttTmp, strCustomWhereGetTipiAttivita) Then Return False
+
+            If dttTmp.Rows.Count > 0 Then
+
+                Dim outputEnc As Encoding = New UTF8Encoding(True)
+                Using textWriter As TextWriter = New StreamWriter(strFileOut, False, outputEnc)
+                    Using csv As CsvWriter = New CsvWriter(textWriter)
+                        csv.Configuration.Delimiter = "|"
+                        csv.Configuration.Encoding = Encoding.UTF8
+
+
+                        csv.WriteField("CHIAVE")
+                        csv.WriteField("COD_DITTA")
+                        csv.WriteField("CODICE")
+                        csv.WriteField("DESCRIZIONE")
+                        csv.WriteField("FLG_PREVISIONALE")
+
+                        csv.NextRecord()
+
+                        For Each dtrT As DataRow In dttTmp.Rows
+
+                            csv.WriteField(ConvStr(dtrT("CHIAVE")))
+                            csv.WriteField(ConvStr(strDittaCorrente))
+                            csv.WriteField(ConvStr(dtrT("CODICE")))
+                            csv.WriteField(ConvStr(dtrT("DESCRIZIONE")))
+                            csv.WriteField(ConvStr(dtrT("FLG_PREVISIONALE")))
+
+                            csv.NextRecord()
+                        Next
+
+                    End Using
+                End Using
+            End If
 
             Return True
 
@@ -2099,6 +2146,82 @@ Public Class CLEIEIBUS
         End Try
     End Function
 
+    Public Overridable Function Elabora_ExportAttivita(ByVal strFileOut As String) As Boolean
+        'esporta tutti i comuni
+        Dim dttTmp As New DataTable
+        Dim sbFile As New StringBuilder
+        Try
+            If Not oCldIbus.GetAttivita(strDittaCorrente, dttTmp, strCustomWhereGetAttivita) Then Return False
+
+            If dttTmp.Rows.Count > 0 Then
+                Dim outputEnc As Encoding = New UTF8Encoding(True)
+                Using textWriter As TextWriter = New StreamWriter(strFileOut, False, outputEnc)
+                    Using csv As CsvWriter = New CsvWriter(textWriter)
+                        csv.Configuration.Delimiter = "|"
+                        csv.Configuration.Encoding = Encoding.UTF8
+
+                        csv.WriteField("CHIAVE")
+                        csv.WriteField("COD_DITTA")
+                        csv.WriteField("COD_ATTIVITA")
+                        csv.WriteField("COD_LEAD")
+                        csv.WriteField("COD_TIPO_ATTIVITA")
+                        csv.WriteField("DES_OGGETTO")
+                        csv.WriteField("DATA_PREVISTA")
+                        csv.WriteField("ORA_PREVISTA")
+                        csv.WriteField("DES_NOTE_ATTIVITA")
+                        csv.WriteField("COD_OPERATORE")
+                        csv.WriteField("COD_STATO")
+                        csv.WriteField("DATA_ESECUZIONE")
+                        csv.WriteField("ORA_ESECUZIONE")
+                        csv.WriteField("DES_NOTE")
+                        csv.WriteField("DAT_ULT_MOD")
+
+                        csv.NextRecord()
+
+                        For Each dtrT As DataRow In dttTmp.Rows
+
+                            csv.WriteField(ConvStr(dtrT("CHIAVE")))
+                            csv.WriteField(ConvStr(strDittaCorrente))
+                            csv.WriteField(ConvStr(dtrT("COD_ATTIVITA")))
+                            csv.WriteField(ConvStr(dtrT("COD_LEAD")))
+                            csv.WriteField(ConvStr(dtrT("COD_TIPO_ATTIVITA")))
+                            csv.WriteField(ConvStr(dtrT("DES_OGGETTO")))
+                            csv.WriteField(ConvData(dtrT("DATA_PREVISTA")))
+                            csv.WriteField(ConvOra(dtrT("ORA_PREVISTA")))
+                            csv.WriteField(ConvStr(dtrT("DES_NOTE_ATTIVITA")))
+                            csv.WriteField(ConvStr(dtrT("COD_OPERATORE")))
+                            csv.WriteField(ConvStr(ConvStr(dtrT("COD_STATO"))))
+                            csv.WriteField(ConvData(dtrT("DATA_ESECUZIONE")))
+                            csv.WriteField(ConvOra(dtrT("ORA_ESECUZIONE")))
+                            csv.WriteField(ConvStr(dtrT("DES_NOTE")))
+                            csv.WriteField(ConvData(dtrT("DAT_ULT_MOD"), True))
+
+                            csv.NextRecord()
+                        Next
+
+                    End Using
+                End Using
+            End If
+
+
+            Return True
+
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            If GestErrorCallThrow() Then
+                Throw New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False))
+            Else
+                ThrowRemoteEvent(New NTSEventArgs("", GestError(ex, Me, "", oApp.InfoError, "", False)))
+            End If
+            '--------------------------------------------------------------	
+        Finally
+
+            dttTmp.Clear()
+            dttTmp.Dispose()
+
+        End Try
+    End Function
+
     Public Overridable Function Elabora_ExportLeadAccessi(ByVal strFileOut As String) As Boolean
         'esporta tutti i comuni
         Dim dttTmp As New DataTable
@@ -2107,36 +2230,40 @@ Public Class CLEIEIBUS
         Try
             If Not oCldIbus.GetLeadAccessi(strDittaCorrente, dttTmp, strCustomWhereGetLeadAccessi) Then Return False
 
+            If dttTmp.Rows.Count > 0 Then
+                Dim outputEnc As Encoding = New UTF8Encoding(True)
+                Using textWriter As TextWriter = New StreamWriter(strFileOut, False, outputEnc)
+                    Using csv As CsvWriter = New CsvWriter(textWriter)
+                        csv.Configuration.Delimiter = "|"
+                        csv.Configuration.Encoding = Encoding.UTF8
 
-            Using textWriter As TextWriter = File.CreateText(strFileOut)
-                Using csv As CsvHelper.CsvWriter = New CsvHelper.CsvWriter(textWriter)
-                    csv.Configuration.Delimiter = "|"
-                    csv.Configuration.Encoding = Encoding.UTF8
+                        csv.WriteField("CHIAVE")
+                        csv.WriteField("COD_DITTA")
+                        csv.WriteField("COD_OPERATORE")
+                        csv.WriteField("COD_LEAD")
+                        csv.WriteField("FLG_VISUALIZZA")
+                        csv.WriteField("FLG_MODIFICA")
+                        csv.WriteField("DAT_ULT_MOD")
 
-                    csv.WriteField("CHIAVE")
-                    csv.WriteField("COD_DITTA")
-                    csv.WriteField("COD_OPERATORE")
-                    csv.WriteField("COD_LEAD")
-                    csv.WriteField("FLG_VISUALIZZA")
-                    csv.WriteField("FLG_MODIFICA")
-                    csv.WriteField("DAT_ULT_MOD")
-                    csv.NextRecord()
-
-                    ' Write row values
-                    For Each dtrT As DataRow In dttTmp.Rows
-
-                        csv.WriteField(ConvStr(dtrT!xx_chiave))
-                        csv.WriteField(strDittaCorrente)
-                        csv.WriteField(ConvStr(dtrT!opcr_opnome))
-                        csv.WriteField(ConvStr(dtrT!opcr_codlead))
-                        csv.WriteField(ConvStr(dtrT!opcr_crmvis))
-                        csv.WriteField(ConvStr(dtrT!opcr_crmmod))
-                        csv.WriteField(ConvData(dtrT!xx_ultagg, True))
-                
                         csv.NextRecord()
-                    Next
+
+                        ' Write row values
+                        For Each dtrT As DataRow In dttTmp.Rows
+
+                            csv.WriteField(ConvStr(dtrT!xx_chiave))
+                            csv.WriteField(strDittaCorrente)
+                            csv.WriteField(ConvStr(dtrT("opcr_opnome")))
+                            csv.WriteField(ConvStr(dtrT("opcr_codlead")))
+                            csv.WriteField(ConvStr(dtrT("opcr_crmvis")))
+                            csv.WriteField(ConvStr(dtrT("opcr_crmmod")))
+                            csv.WriteField(ConvData(dtrT("xx_ultagg"), True))
+
+                            csv.NextRecord()
+                        Next
+                    End Using
                 End Using
-            End Using
+
+            End If
 
             Return True
 

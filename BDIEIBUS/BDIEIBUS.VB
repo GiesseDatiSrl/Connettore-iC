@@ -1629,6 +1629,25 @@ Public Class CLDIEIBUS
         End Try
     End Function
 
+    Public Overridable Function GetTipiAttivita(ByVal strDitta As String, ByRef dttOut As DataTable, ByVal strWhere As String) As Boolean
+        Dim strSQL As String = ""
+        Try
+            strSQL = ApexNetLIB.EmbeddedResource.GetString(GetType(CLDIEIBUS).Assembly, "GetTipiAttivita.sql", oApp.NetDir)
+            strSQL = strSQL.Replace("@ditta", CStrSQL(strDitta))
+
+            If strWhere <> "" Then AddWhereCondition(strSQL, strWhere)
+
+            dttOut = OpenRecordset(strSQL, CLE__APP.DBTIPO.DBAZI)
+
+            Return True
+
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            Throw (New NTSException(GestError(ex, Me, strSQL, oApp.InfoError, "", False)))
+            '--------------------------------------------------------------
+        End Try
+    End Function
+
     Public Overridable Function GetCliforCate(ByVal strDitta As String, ByRef dttOut As DataTable, ByVal strWhere As String) As Boolean
         Dim strSQL As String = ""
         Try
@@ -2090,6 +2109,25 @@ Public Class CLDIEIBUS
             strSQL = ApexNetLIB.EmbeddedResource.GetString(GetType(CLDIEIBUS).Assembly, "GetLeads.sql", oApp.NetDir)
             strSQL = strSQL.Replace("@ditta", CStrSQL(strDitta))
             strSQL = strSQL.Replace("@includi_lead_clienti", strIncludiLeadConClienti)
+
+            If strWhere <> "" Then AddWhereCondition(strSQL, strWhere)
+
+            dttOut = OpenRecordset(strSQL, CLE__APP.DBTIPO.DBAZI)
+
+            Return True
+
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            Throw (New NTSException(GestError(ex, Me, strSQL, oApp.InfoError, "", False)))
+            '--------------------------------------------------------------
+        End Try
+    End Function
+
+    Public Overridable Function GetAttivita(ByVal strDitta As String, ByRef dttOut As DataTable, ByVal strWhere As String) As Boolean
+        Dim strSQL As String = ""
+        Try
+            strSQL = ApexNetLIB.EmbeddedResource.GetString(GetType(CLDIEIBUS).Assembly, "GetAttivita.sql", oApp.NetDir)
+            strSQL = strSQL.Replace("@ditta", CStrSQL(strDitta))
 
             If strWhere <> "" Then AddWhereCondition(strSQL, strWhere)
 
