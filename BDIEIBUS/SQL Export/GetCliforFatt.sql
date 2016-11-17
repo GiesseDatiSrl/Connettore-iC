@@ -6,7 +6,7 @@ SELECT @release = '1.0'
 SELECT 
 	an_tipo, 
 	an_conto,
-	0 as xx_codvalu,
+	moviva.mi_codvalu as xx_codvalu,
 	Sum(moviva.mi_imponib) * -1 AS xx_fatturato, 
 	month(mi_datreg) as xx_mese, 
 	Year(mi_datreg) as xx_anno,
