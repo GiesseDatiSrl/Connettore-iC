@@ -124,7 +124,7 @@ publish/
 #!packages/repositories.config
 
 # Cartella TEST
-TEST/
+TEST*/
 
 # Windows Azure Build Output
 csx/
