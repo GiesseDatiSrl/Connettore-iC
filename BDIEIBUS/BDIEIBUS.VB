@@ -1,4 +1,5 @@
 Imports NTSInformatica.CLN__STD
+Imports System.Data
 Imports System.Data.Common
 Imports NTSInformatica
 Imports System.IO
@@ -11,6 +12,56 @@ Public Class CLDIEIBUS
     Public Const iBNewline As String = "§"
 
 #Region "utils"
+
+    Public Overridable Function ConvOraForDevice(ByVal oIn As Object) As String
+
+        Try
+
+            If NTSCStr(oIn) <> "" And NTSCStr(oIn) <> "0" Then
+                Dim oraminuti As Decimal = ConvOra100Ora60(NTSCDec(oIn))
+                Dim Ore As Decimal = Fix(oraminuti)
+                Dim Minuti As Decimal
+
+                If Ore <> 0 Then
+                    Minuti = (oraminuti Mod Ore) * 100
+                Else
+                    Minuti = 0
+                End If
+
+                Return Ore.ToString("00") + ":" + Minuti.ToString("00")
+
+            Else
+                Return ""
+            End If
+
+
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            Throw (New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False)))
+            '--------------------------------------------------------------
+        End Try
+    End Function
+
+    Public Overridable Function ConvOraFromDevice(ByVal ora As String) As Decimal
+
+        Try
+
+            If NTSCStr(ora) <> "" Then
+                Dim oraminuti As String = ora.Replace(":", ",")
+
+                Return ConvOra100Ora60(System.Convert.ToDecimal(oraminuti))
+             
+            Else
+                Return 0
+            End If
+
+
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            Throw (New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False)))
+            '--------------------------------------------------------------
+        End Try
+    End Function
 
     Public Overridable Function AddWhereCondition(ByRef sqlString As String, ByVal whereCondition As String) As Boolean
         Dim strSQL As String = ""
@@ -165,24 +216,57 @@ Public Class CLDIEIBUS
     ''' <remarks></remarks>
     Public Overridable Function ToSql(ByVal strDesc As String, Optional ByVal MaxLength As Integer = 0) As String
         Dim RetVal As String
-
         Try
 
             If strDesc Is Nothing Then
                 RetVal = ""
             Else
-                RetVal = strDesc
+                RetVal = strDesc.ToString
             End If
 
             If MaxLength > 0 And Len(RetVal) >= MaxLength Then
                 RetVal = Left(RetVal, MaxLength)
             End If
-
             RetVal = ConvEmptyToNull(CStrSQL(RetVal))
 
+            Return RetVal
+        Catch ex As Exception
+            Throw (New NTSException(GestError(ex, Me, strDesc.ToString, oApp.InfoError, "", False)))
+        End Try
+        Return RetVal
+    End Function
+
+    Public Overridable Function ToSql(ByVal Valore As Decimal) As String
+        Dim RetVal As String
+        Try
+
+
+            RetVal = ConvEmptyToNull(CDblSQL(Valore))
+
+            Return RetVal
 
         Catch ex As Exception
-            Throw (New NTSException(GestError(ex, Me, strDesc, oApp.InfoError, "", False)))
+            Throw (New NTSException(GestError(ex, Me, Valore.ToString, oApp.InfoError, "", False)))
+        End Try
+        Return RetVal
+    End Function
+
+    Public Overridable Function ToSql(ByVal Valore As DateTime) As String
+        Dim RetVal As String
+        Try
+
+            If Valore.ToString.Length > 10 Then
+                RetVal = CDataOraSQL(Valore)
+            Else
+                RetVal = CDataSQL(Valore)
+
+            End If
+
+
+            Return RetVal
+
+        Catch ex As Exception
+            Throw (New NTSException(GestError(ex, Me, Valore.ToString, oApp.InfoError, "", False)))
         End Try
         Return RetVal
     End Function
@@ -716,6 +800,131 @@ Public Class CLDIEIBUS
             Throw (New NTSException(GestError(ex, Me, strSQL, oApp.InfoError, "", False)))
         End Try
     End Function
+
+    Public Overridable Function InsertAttivitaData(ByVal strDitta As String, t As TestataAttivita) As Boolean
+
+        Dim strSQL As String = ""
+        Dim nNumero As Integer = 0
+
+        Dim dbConn As DbConnection = ApriDB(CLE__APP.DBTIPO.DBAZI)
+        ApriTrans(dbConn)
+
+        nNumero = LegNuma(strDitta, "C7", " ", 0, True, dbConn)
+
+        Try
+          
+            ' Recupere info su tipologia di attivita' (previsionale o no)
+            Dim dsTmp As New DataSet
+            OpenRecordset("select tb_prevcons from tabtaco where tb_codtaco = " + CStrSQL(t.cod_tipo_attivita), CLE__APP.DBTIPO.DBAZI, "TABTACO", dsTmp, dbConn)
+
+            Dim attivita_previsionale As String = "N"
+            attivita_previsionale = dsTmp.Tables("TABTACO").Rows(0)!tb_prevcons.ToString
+
+
+            Dim data_import As Date = t.data_import.GetValueOrDefault(DateTime.Today)
+            Dim data_esecuzione As Date = t.data_esecuzione.GetValueOrDefault(DateTime.Today)
+            Dim ora_esecuzione As Decimal = ConvOraFromDevice(t.ora_esecuzione)
+
+            strSQL = ApexNetLIB.EmbeddedResource.GetString(GetType(CLDIEIBUS).Assembly, "InsertAttivita.sql", oApp.NetDir)
+
+            strSQL = strSQL.Replace("@codditt@", ToSql(strDitta)) ' Codice della ditta
+            strSQL = strSQL.Replace("@ca_codcrac@", ToSql(nNumero)) ' Codice Attivita
+
+            ' Gestisco le differenze
+            If attivita_previsionale = "S" Then
+                strSQL = strSQL.Replace("@ca_dataes@", ToSql(""))
+                strSQL = strSQL.Replace("@ca_oraes@", ToSql(0))
+                strSQL = strSQL.Replace("@ca_dataprev@", ToSql(data_esecuzione)) ' data prev esecuzione (per appunt.)     
+                strSQL = strSQL.Replace("@ca_oraprev@", ToSql(ora_esecuzione)) ' ora prev. esecuzione (per app.)             
+
+                'ca_dataes = Nothing
+                'ca_oraes = 0
+                'data_prev = data troncata
+                'ca_ora_prev = ora
+
+            Else
+                strSQL = strSQL.Replace("@ca_dataes@", ToSql(data_import))
+                strSQL = strSQL.Replace("@ca_oraes@", ToSql(ora_esecuzione))
+                strSQL = strSQL.Replace("@ca_dataprev@", ToSql("")) ' data prev esecuzione (per appunt.)         
+                strSQL = strSQL.Replace("@ca_oraprev@", ToSql(0)) ' ora prev. esecuzione (per app.)              
+
+                'dataes = data troncata
+                'oraes = orario
+                'data_prev = null
+                'ora_prev = 0
+            End If
+
+
+            strSQL = strSQL.Replace("@ca_codlead@", ToSql(t.cod_lead)) ' Codice del lead
+            strSQL = strSQL.Replace("@ca_codoppo@", ToSql("0")) ' Codice opportunità (0=Non collegato a opportunità)
+            strSQL = strSQL.Replace("@ca_oggetto@", ToSql(t.des_oggetto)) ' Oggetto
+            strSQL = strSQL.Replace("@ca_codtaco@", ToSql(t.cod_tipo_attivita)) ' Codice dell'attivà
+            strSQL = strSQL.Replace("@ca_codsatc@", ToSql("0")) ' ( ex: cod. stato attività (dipende dal campo sopra) (tabsatc))
+            strSQL = strSQL.Replace("@ca_status@", ToSql(t.cod_stato))
+            strSQL = strSQL.Replace("@ca_opinc@", ToSql("0"))
+            strSQL = strSQL.Replace("@ca_note@", ToSql(""))
+            strSQL = strSQL.Replace("@ca_modoppo@", ToSql(" "))
+            strSQL = strSQL.Replace("@ca_ultagg@", ToSql(data_import))
+            strSQL = strSQL.Replace("@ca_opnome@", ToSql(t.cod_operatore))
+            strSQL = strSQL.Replace("@ca_oraes@", ToSql(ora_esecuzione))
+            strSQL = strSQL.Replace("@ca_tempes@", ToSql("0")) ' Tempo eseguito
+            strSQL = strSQL.Replace("@ca_libstr1@", ToSql("")) ' Campo libero stringa
+            strSQL = strSQL.Replace("@ca_libint1@", ToSql("0")) ' campo libero intero
+            strSQL = strSQL.Replace("@ca_opincpr@", ToSql("0")) ' Sconosciuto
+            strSQL = strSQL.Replace("@ca_luogo@", ToSql("")) ' Luogo attività
+            strSQL = strSQL.Replace("@ca_altrep@", ToSql("")) ' altre persone coinvolt
+            strSQL = strSQL.Replace("@ca_opincpr2@", ToSql("0"))
+            strSQL = strSQL.Replace("@ca_opincpr3@", ToSql("0"))
+            strSQL = strSQL.Replace("@ca_opincpr4@", ToSql("0"))
+            strSQL = strSQL.Replace("@ca_persona@", ToSql("")) ' persona del lead con cui debbo parlare/ho parlato
+            strSQL = strSQL.Replace("@ca_servdtua@", ToSql(New DateTime(1900, 1, 1))) ' Server : Data/ora ultimo agg. (GMT)
+            strSQL = strSQL.Replace("@ca_servdeleted@", ToSql("N"))  'Server : cancellato s/n
+            strSQL = strSQL.Replace("@ca_clircodcprov@", ToSql("0")) ' client remoto : cod. cract provvisorio (per gli inseriti non ancora aggiornati sul server.)
+            strSQL = strSQL.Replace("@ca_clirdeleted@", ToSql("N")) ' client remoto : cancellato s/n
+            strSQL = strSQL.Replace("@ca_clirupdated@", ToSql("N")) ' client remoto : aggiornato s/n (se ciè stato inserito, modificato, cancellato dall''ultima sincronia)
+            strSQL = strSQL.Replace("@ca_clirdtua@", ToSql(New DateTime(1900, 1, 1))) ' client remoto : Data/ora ultimo agg. (GMT)
+            strSQL = strSQL.Replace("@ca_opinc2@", ToSql("0"))  ' utilizzo sconosciuto
+            strSQL = strSQL.Replace("@ca_opinc3@", ToSql("0"))  ' utilizzo sconosciuto
+            strSQL = strSQL.Replace("@ca_opinc4@", ToSql("0"))  ' utilizzo sconosciuto
+            strSQL = strSQL.Replace("@ca_temppr@", ToSql("0")) ' Tempo previsto
+            strSQL = strSQL.Replace("@ca_opnomeinc@", ToSql(t.cod_operatore)) ' Nome operatore proprietario new crm : rel 15
+            strSQL = strSQL.Replace("@ca_tdtipork@", ToSql("!")) ' Tipo e (sempre !)  (per collegamento uno  a molti tra testoff e cract) NEW
+
+            strSQL = strSQL.Replace("@ca_tdanno@", ToSql("0")) ' Anno offerta
+            strSQL = strSQL.Replace("@ca_tdserie@", ToSql(" ")) ' Serie offerta                               
+            strSQL = strSQL.Replace("@ca_tdnumord@", ToSql("0")) ' Numero offerta                  
+            strSQL = strSQL.Replace("@ca_tdvers@", ToSql("0")) ' Numero di versione
+            strSQL = strSQL.Replace("@ca_maimeetinv@", ToSql("N")) ' Mail meeting inviata S/N
+            strSQL = strSQL.Replace("@ca_codcamp@", ToSql("0"))  ' Codice campagna
+            strSQL = strSQL.Replace("@ca_organig@", ToSql("0")) ' Progressivo Organizzazione di riferimento
+
+            nNumero = AggNuma(strDitta, "C7", " ", 0, nNumero, False, False, "", dbConn)
+
+            Execute(strSQL, CLE__APP.DBTIPO.DBAZI, dbConn)
+
+            ' Inseristo l'attività specifica dell'operatore
+            strSQL = ApexNetLIB.EmbeddedResource.GetString(GetType(CLDIEIBUS).Assembly, "InsertAttivitaOperatore.sql", oApp.NetDir)
+
+            strSQL = strSQL.Replace("@codditt@", ToSql(strDitta)) ' Codice della ditta
+            strSQL = strSQL.Replace("@cap_codcrac@", ToSql(nNumero)) ' Codice Attivita
+            strSQL = strSQL.Replace("@cap_opcrmincpr@", ToSql(t.cod_operatore)) ' Codice Attivita
+            strSQL = strSQL.Replace("@cap_status@", ToSql(t.cod_stato)) ' Codice Stato
+            strSQL = strSQL.Replace("@cap_dataes@", ToSql(data_esecuzione)) ' Data esecuzione
+            strSQL = strSQL.Replace("@cap_oraes@", ToSql(ora_esecuzione)) ' Ora esecuzione
+            strSQL = strSQL.Replace("@cap_tempes@", ToSql(" ")) ' Tempo impiegato
+            strSQL = strSQL.Replace("@cap_note@", ToSql(t.des_note_attivita)) ' Note
+
+
+            Execute(strSQL, CLE__APP.DBTIPO.DBAZI, dbConn)
+
+            ChiudiTrans()
+            Return True
+        Catch ex As Exception
+            AnnullaTrans()
+            Throw (New NTSException(GestError(ex, Me, strSQL, oApp.InfoError, "", False)))
+        End Try
+    End Function
+
 
     Public Overridable Function UpdateLeadData(ByVal strDitta As String, Lead As TestataLeadsExport) As Boolean
         Dim strSQL As String = ""
@@ -1800,6 +2009,7 @@ Public Class CLDIEIBUS
             strSQL = strSQL.Replace("@tipocf", CStrSQL(strTipoCF))
 
             If strWhere <> "" Then AddWhereCondition(strSQL, strWhere)
+
 
             dttOut = OpenRecordset(strSQL, CLE__APP.DBTIPO.DBAZI)
 

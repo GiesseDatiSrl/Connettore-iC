@@ -10,6 +10,7 @@ Imports ApexNetLIB
 Imports CsvHelper
 
 
+
 Public Class CLEIEIBUS
     Inherits CLE__BASN
 
@@ -407,39 +408,7 @@ Public Class CLEIEIBUS
             '--------------------------------------------------------------	
         End Try
     End Function
-    Public Overridable Function ConvOra(ByVal oIn As Object) As String
-
-        Try
-
-            If NTSCStr(oIn) <> "" And NTSCStr(oIn) <> "0" Then
-                Dim oraminuti As Decimal = ConvOra100Ora60(NTSCDec(oIn))
-                Dim Ore As Decimal = Fix(oraminuti)
-                Dim Minuti As Decimal
-
-                If Ore <> 0 Then
-                    Minuti = (oraminuti Mod Ore) * 100
-                Else
-                    Minuti = 0
-                End If
- 
-                Return Ore.ToString("00") + ":" + Minuti.ToString("00")
-
-            Else
-                Return ""
-            End If
-
-
-        Catch ex As Exception
-            '--------------------------------------------------------------
-            If GestErrorCallThrow() Then
-                Throw New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False))
-            Else
-                ThrowRemoteEvent(New NTSEventArgs("", GestError(ex, Me, "", oApp.InfoError, "", False)))
-            End If
-            '--------------------------------------------------------------	
-        End Try
-    End Function
-
+   
     Public Overridable Function Elabora() As Boolean
         Dim strMsgLog As String = ""
         Dim i As Integer = 0
@@ -1103,6 +1072,8 @@ Public Class CLEIEIBUS
                 End If
 
 
+                ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Import attivita da ws..."))
+                If Not Elabora_ImportAttivitaAPI() Then Return False
 
                 ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Import modifiche clienti da ws..."))
                 If Not Elabora_ImportAnagraAPI() Then Return False
@@ -2187,12 +2158,12 @@ Public Class CLEIEIBUS
                             csv.WriteField(ConvStr(dtrT("COD_TIPO_ATTIVITA")))
                             csv.WriteField(ConvStr(dtrT("DES_OGGETTO")))
                             csv.WriteField(ConvData(dtrT("DATA_PREVISTA")))
-                            csv.WriteField(ConvOra(dtrT("ORA_PREVISTA")))
+                            csv.WriteField(oCldIbus.ConvOraForDevice(dtrT("ORA_PREVISTA")))
                             csv.WriteField(ConvStr(dtrT("DES_NOTE_ATTIVITA")))
                             csv.WriteField(ConvStr(dtrT("COD_OPERATORE")))
                             csv.WriteField(ConvStr(ConvStr(dtrT("COD_STATO"))))
                             csv.WriteField(ConvData(dtrT("DATA_ESECUZIONE")))
-                            csv.WriteField(ConvOra(dtrT("ORA_ESECUZIONE")))
+                            csv.WriteField(oCldIbus.ConvOraForDevice(dtrT("ORA_ESECUZIONE")))
                             csv.WriteField(ConvStr(dtrT("DES_NOTE")))
                             csv.WriteField(ConvData(dtrT("DAT_ULT_MOD"), True))
 
@@ -4458,6 +4429,80 @@ Public Class CLEIEIBUS
 
 
     End Function
+
+
+
+    Public Overridable Function Elabora_ImportAttivitaAPI() As Boolean
+
+        ' Variabili di uso locale
+        Dim msg As String = ""
+
+        Try
+
+            Dim LastStoredID As Integer = CInt(oCldIbus.GetCustomData(strDittaCorrente, "attivita_id", "0"))
+
+            ' TODO:  Togliere 
+            ' LastStoredID = 30
+
+            ' Istanzio l'oggetto Export dell'AMHelper
+            Dim ed As New GetDataAM(strAuthKeyAM, strAppManagerAPI)
+
+            If eProxyUrl <> "" Then
+                ed.HttpProxyAutentication(eProxyUsername, eProxyPassword, eProxyUrl, CInt(eProxyPort))
+            End If
+
+            Dim AttivitaData As ws_rec_attivita = Nothing
+            Dim RetVal As Boolean = ed.exp_attivita(LastStoredID, AttivitaData)
+
+
+            If RetVal AndAlso AttivitaData IsNot Nothing Then
+
+                For Each t As TestataAttivita In AttivitaData.attivita
+
+                    ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", String.Format("Import attività di {0}, ID Coda: [{1}]", t.cod_operatore, t.id.ToString)))
+
+                    If t.id < LastStoredID Then
+                        msg = String.Format("Le API hanno risposto con un id={0} su Import Attivita", t.id)
+                        WEDOLogger.WriteToRegistry(msg, EventLogEntryType.Error)
+                        Throw New NTSException(msg)
+                    End If
+
+                    ' ------------------------------
+
+                    If String.IsNullOrEmpty(t.cod_attivita) Then
+                        ' Sto trattando una nuova attivita
+                        oCldIbus.InsertAttivitaData(strDittaCorrente, t)
+
+
+                    Else
+                        ' Il cod attività e' valorizzato quindi si tratta di una modifica ad una attivita esistente
+
+                    End If
+
+                    ' ------------------------------
+                    Dim AggResult As Boolean = oCldIbus.SetCustomData(strDittaCorrente, "attivita_id", t.id.ToString())
+
+
+                Next
+            End If
+
+
+            Return True
+
+        Catch ex As Exception
+            '--------------------------------------------------------------
+            If GestErrorCallThrow() Then
+                Throw New NTSException(GestError(ex, Me, "", oApp.InfoError, "", False))
+            Else
+                ThrowRemoteEvent(New NTSEventArgs("", GestError(ex, Me, "", oApp.InfoError, "", False)))
+            End If
+            '--------------------------------------------------------------	
+        End Try
+
+
+
+    End Function
+
 
     Public Overridable Function Elabora_ImportLeadAPI() As Boolean
 
