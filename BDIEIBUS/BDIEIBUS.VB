@@ -50,7 +50,7 @@ Public Class CLDIEIBUS
                 Dim oraminuti As String = ora.Replace(":", ",")
 
                 Return ConvOra100Ora60(System.Convert.ToDecimal(oraminuti))
-             
+
             Else
                 Return 0
             End If
@@ -812,13 +812,17 @@ Public Class CLDIEIBUS
         nNumero = LegNuma(strDitta, "C7", " ", 0, True, dbConn)
 
         Try
-          
+
             ' Recupere info su tipologia di attivita' (previsionale o no)
             Dim dsTmp As New DataSet
-            OpenRecordset("select tb_prevcons from tabtaco where tb_codtaco = " + CStrSQL(t.cod_tipo_attivita), CLE__APP.DBTIPO.DBAZI, "TABTACO", dsTmp, dbConn)
+            Dim attivita_previsionale As String
+            OpenRecordset("select tb_prevcons from tabtaco where codditt = " + CStrSQL(strDitta) + " and  tb_codtaco = " + CStrSQL(t.cod_tipo_attivita), CLE__APP.DBTIPO.DBAZI, "TABTACO", dsTmp, dbConn)
 
-            Dim attivita_previsionale As String = "N"
-            attivita_previsionale = dsTmp.Tables("TABTACO").Rows(0)!tb_prevcons.ToString
+            If dsTmp.Tables("TABTACO").Rows.Count = 0 Then
+                attivita_previsionale = "S"
+            Else
+                attivita_previsionale = dsTmp.Tables("TABTACO").Rows(0)!tb_prevcons.ToString
+            End If
 
 
             Dim data_import As Date = t.data_import.GetValueOrDefault(DateTime.Today)
@@ -830,28 +834,28 @@ Public Class CLDIEIBUS
             strSQL = strSQL.Replace("@codditt@", ToSql(strDitta)) ' Codice della ditta
             strSQL = strSQL.Replace("@ca_codcrac@", ToSql(nNumero)) ' Codice Attivita
 
+
+
             ' Gestisco le differenze
             If attivita_previsionale = "S" Then
-                strSQL = strSQL.Replace("@ca_dataes@", ToSql(""))
+
+                strSQL = strSQL.Replace("@ca_dataprev@", ToSql(Now.Date)) ' data prev esecuzione (per appunt.)     
+                strSQL = strSQL.Replace("@ca_oraprev@", ToSql(ConvOra60Ora100(NTSCDec(Now.Hour & "," & Now.Minute), oApp.NDecSuTempiDiba))) ' ora prev. esecuzione (per app.)  
+
+                strSQL = strSQL.Replace("@ca_dataes@", "null")
                 strSQL = strSQL.Replace("@ca_oraes@", ToSql(0))
-                strSQL = strSQL.Replace("@ca_dataprev@", ToSql(data_esecuzione)) ' data prev esecuzione (per appunt.)     
-                strSQL = strSQL.Replace("@ca_oraprev@", ToSql(ora_esecuzione)) ' ora prev. esecuzione (per app.)             
-
-                'ca_dataes = Nothing
-                'ca_oraes = 0
-                'data_prev = data troncata
-                'ca_ora_prev = ora
-
             Else
+
+                strSQL = strSQL.Replace("@ca_dataprev@", ToSql("")) ' data prev esecuzione (per appunt.)         
+                strSQL = strSQL.Replace("@ca_oraprev@", ToSql(0)) ' ora prev. esecuzione (per app.)      
                 strSQL = strSQL.Replace("@ca_dataes@", ToSql(data_import))
                 strSQL = strSQL.Replace("@ca_oraes@", ToSql(ora_esecuzione))
-                strSQL = strSQL.Replace("@ca_dataprev@", ToSql("")) ' data prev esecuzione (per appunt.)         
-                strSQL = strSQL.Replace("@ca_oraprev@", ToSql(0)) ' ora prev. esecuzione (per app.)              
 
-                'dataes = data troncata
-                'oraes = orario
+
                 'data_prev = null
                 'ora_prev = 0
+                'dataes = data troncata
+                'oraes = orario
             End If
 
 
@@ -860,7 +864,7 @@ Public Class CLDIEIBUS
             strSQL = strSQL.Replace("@ca_oggetto@", ToSql(t.des_oggetto)) ' Oggetto
             strSQL = strSQL.Replace("@ca_codtaco@", ToSql(t.cod_tipo_attivita)) ' Codice dell'attivà
             strSQL = strSQL.Replace("@ca_codsatc@", ToSql("0")) ' ( ex: cod. stato attività (dipende dal campo sopra) (tabsatc))
-            strSQL = strSQL.Replace("@ca_status@", ToSql(t.cod_stato))
+            strSQL = strSQL.Replace("@ca_status@", ToSql(IIf(t.cod_stato.ToString = "A", "E", t.cod_stato.ToString).ToString)) ' Codice stato attivita
             strSQL = strSQL.Replace("@ca_opinc@", ToSql("0"))
             strSQL = strSQL.Replace("@ca_note@", ToSql(""))
             strSQL = strSQL.Replace("@ca_modoppo@", ToSql(" "))
@@ -908,11 +912,18 @@ Public Class CLDIEIBUS
             strSQL = strSQL.Replace("@codditt@", ToSql(strDitta)) ' Codice della ditta
             strSQL = strSQL.Replace("@cap_codcrac@", ToSql(nNumero)) ' Codice Attivita
             strSQL = strSQL.Replace("@cap_opcrmincpr@", ToSql(t.cod_operatore)) ' Codice Attivita
+         
             strSQL = strSQL.Replace("@cap_status@", ToSql(t.cod_stato)) ' Codice Stato
-            strSQL = strSQL.Replace("@cap_dataes@", ToSql(data_esecuzione)) ' Data esecuzione
-            strSQL = strSQL.Replace("@cap_oraes@", ToSql(ora_esecuzione)) ' Ora esecuzione
             strSQL = strSQL.Replace("@cap_tempes@", ToSql(" ")) ' Tempo impiegato
-            strSQL = strSQL.Replace("@cap_note@", ToSql(t.des_note_attivita)) ' Note
+            strSQL = strSQL.Replace("@cap_note@", ToSql(t.des_note)) ' Note
+
+            If attivita_previsionale = "S" Then
+                strSQL = strSQL.Replace("@cap_dataes@", "null") ' Data esecuzione
+                strSQL = strSQL.Replace("@cap_oraes@", ToSql(0)) ' Ora esecuzione
+            Else
+                strSQL = strSQL.Replace("@cap_dataes@", ToSql(data_esecuzione)) ' Data esecuzione
+                strSQL = strSQL.Replace("@cap_oraes@", ToSql(ora_esecuzione)) ' Ora esecuzione
+            End If
 
 
             Execute(strSQL, CLE__APP.DBTIPO.DBAZI, dbConn)
@@ -925,6 +936,92 @@ Public Class CLDIEIBUS
         End Try
     End Function
 
+    Public Overridable Function UpdateAttivitaData(ByVal strDitta As String, t As TestataAttivita) As Boolean
+
+        Dim strSQL As String = ""
+        Dim nNumero As Integer = 0
+        Dim dttOut As New DataTable
+
+        Dim dbConn As DbConnection = ApriDB(CLE__APP.DBTIPO.DBAZI)
+        ApriTrans(dbConn)
+
+        'se tutte le attivita' o eseguite  sono eseguite:
+        '1. Impostare stato principale a ESEGUITO
+        '2. Impostare la data e l'ora attivita principale
+
+        'se una attivita viene messa in eseguito:
+        '1. Impostare  la data e l'ora di esecuzione
+
+        ' esite la mia attivita ?
+
+        ' Le modifiche sono consetite su
+        ' - Note
+        ' - Flag di eseguito (si veda flag previsionale)
+        ' - Della data e ora completamento.
+        Try
+
+            Dim data_esecuzione As Date = t.data_esecuzione.GetValueOrDefault(DateTime.Today)
+            Dim ora_esecuzione As Decimal = ConvOraFromDevice(t.ora_esecuzione)
+            Dim cond1_upd_attivita As Boolean = False
+            Dim cond2_upd_attivita As Boolean = False
+
+            Select Case t.cod_stato
+                Case "D" ' Da eseguito
+                    strSQL = String.Format("update cractopp set cap_note={0}, cap_status={1}, cap_dataes={2}, cap_oraes={3} where codditt={4} and cap_codcrac={5} and cap_opcrmincpr={6}", _
+                                            ToSql(t.des_note), _
+                                            ToSql(t.cod_stato), _
+                                            "null", _
+                                            "0", _
+                                            ToSql(strDitta), _
+                                            ToSql(t.cod_attivita), _
+                                            ToSql(t.cod_operatore) _
+                                            )
+                Case "E", "A" ' Eseguito o Annullato
+                    strSQL = String.Format("update cractopp set cap_note={0}, cap_status={1}, cap_dataes={2}, cap_oraes={3} where codditt={4} and cap_codcrac={5} and cap_opcrmincpr={6}", _
+                                            ToSql(t.des_note), _
+                                            ToSql(t.cod_stato), _
+                                            ToSql(data_esecuzione), _
+                                            ToSql(ora_esecuzione), _
+                                            ToSql(strDitta), _
+                                            ToSql(t.cod_attivita), _
+                                            ToSql(t.cod_operatore) _
+                                            )
+                    cond1_upd_attivita = True ' Questa e' la prima delle 2 condizioni per aggiornare data ora e stato nella testata
+            End Select
+            Execute(strSQL, CLE__APP.DBTIPO.DBAZI, dbConn)
+
+
+            ' Se non esistono altri operatori che hanno questa attività assegnata e ancora da completare
+            ' sono nella seconda condizione necessaria per aggiornare la testata
+            strSQL = String.Format("select * from cractopp where codditt={0} and cap_codcrac={1}  and cap_opcrmincpr <> {2} and cap_status= 'D'", _
+                                   ToSql(strDitta), _
+                                   ToSql(t.cod_attivita), _
+                                   ToSql(t.cod_operatore))
+
+            dttOut = OpenRecordset(strSQL, CLE__APP.DBTIPO.DBAZI)
+            ' Questa e' la seconda delle 2 condizioni per aggiornare data ora e stato nella testata
+            If dttOut.Rows.Count = 0 Then
+                cond2_upd_attivita = True
+            End If
+
+            ' Aggiorno stato, data e ora della testata se ci sono le condizioni richieste
+            If cond1_upd_attivita And cond2_upd_attivita Then
+                strSQL = String.Format("update cract set ca_oraes={0}, ca_dataes={1}, ca_status={2} where codditt={3} and ca_codcrac={4}", _
+                                       ToSql(ConvOra60Ora100(NTSCDec(Now.Hour & "," & Now.Minute), oApp.NDecSuTempiDiba)), _
+                                       ToSql(Now.Date), _
+                                       ToSql(t.cod_stato), _
+                                       ToSql(strDitta), _
+                                       ToSql(t.cod_attivita))
+                Execute(strSQL, CLE__APP.DBTIPO.DBAZI, dbConn)
+            End If
+
+            ChiudiTrans()
+            Return True
+        Catch ex As Exception
+            AnnullaTrans()
+            Throw (New NTSException(GestError(ex, Me, strSQL, oApp.InfoError, "", False)))
+        End Try
+    End Function
 
     Public Overridable Function UpdateLeadData(ByVal strDitta As String, Lead As TestataLeadsExport) As Boolean
         Dim strSQL As String = ""

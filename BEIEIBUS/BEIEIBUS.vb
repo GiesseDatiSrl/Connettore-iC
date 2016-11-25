@@ -1071,9 +1071,8 @@ Public Class CLEIEIBUS
                     Return False
                 End If
 
-
-                ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Import attivita da ws..."))
-                If Not Elabora_ImportAttivitaAPI() Then Return False
+                ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Import ordini da ws..."))
+                If Not Elabora_ImportOrdiniAPI() Then Return False
 
                 ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Import modifiche clienti da ws..."))
                 If Not Elabora_ImportAnagraAPI() Then Return False
@@ -1087,10 +1086,8 @@ Public Class CLEIEIBUS
                 ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Import note leads da ws..."))
                 If Not Elabora_ImportLeadNoteAPI() Then Return False
 
-                ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Import ordini da ws..."))
-                If Not Elabora_ImportOrdiniAPI() Then Return False
-
-
+                ThrowRemoteEvent(New NTSEventArgs("AGGIOLABEL", "Import attivita da ws..."))
+                If Not Elabora_ImportAttivitaAPI() Then Return False
 
             End If
 
@@ -2137,11 +2134,12 @@ Public Class CLEIEIBUS
                         csv.WriteField("COD_LEAD")
                         csv.WriteField("COD_TIPO_ATTIVITA")
                         csv.WriteField("DES_OGGETTO")
-                        csv.WriteField("DATA_PREVISTA")
-                        csv.WriteField("ORA_PREVISTA")
+                        csv.WriteField("COD_STATO_ATTIVITA")
+                        csv.WriteField("DATA_PREVISTA_ATTIVITA")
+                        csv.WriteField("ORA_PREVISTA_ATTIVITA")
                         csv.WriteField("DES_NOTE_ATTIVITA")
-                        csv.WriteField("COD_OPERATORE")
                         csv.WriteField("COD_STATO")
+                        csv.WriteField("COD_OPERATORE")
                         csv.WriteField("DATA_ESECUZIONE")
                         csv.WriteField("ORA_ESECUZIONE")
                         csv.WriteField("DES_NOTE")
@@ -2157,11 +2155,12 @@ Public Class CLEIEIBUS
                             csv.WriteField(ConvStr(dtrT("COD_LEAD")))
                             csv.WriteField(ConvStr(dtrT("COD_TIPO_ATTIVITA")))
                             csv.WriteField(ConvStr(dtrT("DES_OGGETTO")))
-                            csv.WriteField(ConvData(dtrT("DATA_PREVISTA")))
-                            csv.WriteField(oCldIbus.ConvOraForDevice(dtrT("ORA_PREVISTA")))
+                            csv.WriteField(ConvStr(ConvStr(dtrT("COD_STATO_ATTIVITA"))))
+                            csv.WriteField(ConvData(dtrT("DATA_PREVISTA_ATTIVITA")))
+                            csv.WriteField(oCldIbus.ConvOraForDevice(dtrT("ORA_PREVISTA_ATTIVITA")))
                             csv.WriteField(ConvStr(dtrT("DES_NOTE_ATTIVITA")))
-                            csv.WriteField(ConvStr(dtrT("COD_OPERATORE")))
                             csv.WriteField(ConvStr(ConvStr(dtrT("COD_STATO"))))
+                            csv.WriteField(ConvStr(dtrT("COD_OPERATORE")))
                             csv.WriteField(ConvData(dtrT("DATA_ESECUZIONE")))
                             csv.WriteField(oCldIbus.ConvOraForDevice(dtrT("ORA_ESECUZIONE")))
                             csv.WriteField(ConvStr(dtrT("DES_NOTE")))
@@ -4472,17 +4471,15 @@ Public Class CLEIEIBUS
                     If String.IsNullOrEmpty(t.cod_attivita) Then
                         ' Sto trattando una nuova attivita
                         oCldIbus.InsertAttivitaData(strDittaCorrente, t)
-
+                        LogWrite(oApp.Tr(Me, 129919999269031600, "Importo nuova attivita per il lead: " + t.cod_lead), True)
 
                     Else
-                        ' Il cod attività e' valorizzato quindi si tratta di una modifica ad una attivita esistente
-
+                        oCldIbus.UpdateAttivitaData(strDittaCorrente, t)
+                        LogWrite(oApp.Tr(Me, 129919999269031600, "Aggiorno i dati dell'attività id: " + t.cod_attivita), True)
                     End If
 
                     ' ------------------------------
                     Dim AggResult As Boolean = oCldIbus.SetCustomData(strDittaCorrente, "attivita_id", t.id.ToString())
-
-
                 Next
             End If
 
