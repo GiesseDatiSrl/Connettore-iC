@@ -19,3 +19,12 @@
            ,@cap_note@
            )
 
+
+-- Scommentare il seguente esempio per aggiornare le note di testata.
+/*
+update cract 
+set ca_note=@cap_note@
+where 1=1
+and codditt = @codditt@ 
+and ca_codcrac = @cap_codcrac@
+*/

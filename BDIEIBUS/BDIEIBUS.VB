@@ -965,27 +965,29 @@ Public Class CLDIEIBUS
             Dim cond1_upd_attivita As Boolean = False
             Dim cond2_upd_attivita As Boolean = False
 
+            strSQL = ApexNetLIB.EmbeddedResource.GetString(GetType(CLDIEIBUS).Assembly, "UpdateAttivitaOperatore.sql", oApp.NetDir)
+
             Select Case t.cod_stato
                 Case "D" ' Da eseguito
-                    strSQL = String.Format("update cractopp set cap_note={0}, cap_status={1}, cap_dataes={2}, cap_oraes={3} where codditt={4} and cap_codcrac={5} and cap_opcrmincpr={6}", _
-                                            ToSql(t.des_note), _
-                                            ToSql(t.cod_stato), _
-                                            "null", _
-                                            "0", _
-                                            ToSql(strDitta), _
-                                            ToSql(t.cod_attivita), _
-                                            ToSql(t.cod_operatore) _
-                                            )
+
+                    strSQL = strSQL.Replace("@cap_note@", ToSql(t.des_note)) 'Note
+                    strSQL = strSQL.Replace("@cap_status@", ToSql(t.cod_stato)) ' Stato attivita 
+                    strSQL = strSQL.Replace("@cap_dataes@", "null") ' Data eseguito
+                    strSQL = strSQL.Replace("@cap_oraes@", "0") ' Ora eseguito
+                    strSQL = strSQL.Replace("@codditt@", ToSql(strDitta)) ' Codice ditta 
+                    strSQL = strSQL.Replace("@cap_codcrac@", ToSql(t.cod_attivita)) ' Codice attivita
+                    strSQL = strSQL.Replace("@cap_opcrmincpr@", ToSql(t.cod_operatore)) ' Codice operatore
+
                 Case "E", "A" ' Eseguito o Annullato
-                    strSQL = String.Format("update cractopp set cap_note={0}, cap_status={1}, cap_dataes={2}, cap_oraes={3} where codditt={4} and cap_codcrac={5} and cap_opcrmincpr={6}", _
-                                            ToSql(t.des_note), _
-                                            ToSql(t.cod_stato), _
-                                            ToSql(data_esecuzione), _
-                                            ToSql(ora_esecuzione), _
-                                            ToSql(strDitta), _
-                                            ToSql(t.cod_attivita), _
-                                            ToSql(t.cod_operatore) _
-                                            )
+
+                    strSQL = strSQL.Replace("@cap_note@", ToSql(t.des_note)) 'Note
+                    strSQL = strSQL.Replace("@cap_status@", ToSql(t.cod_stato)) ' Stato attivita 
+                    strSQL = strSQL.Replace("@cap_dataes@", ToSql(data_esecuzione)) ' Data eseguito
+                    strSQL = strSQL.Replace("@cap_oraes@", ToSql(ora_esecuzione)) ' Ora eseguito
+                    strSQL = strSQL.Replace("@codditt@", ToSql(strDitta)) ' Codice ditta 
+                    strSQL = strSQL.Replace("@cap_codcrac@", ToSql(t.cod_attivita)) ' Codice attivita
+                    strSQL = strSQL.Replace("@cap_opcrmincpr@", ToSql(t.cod_operatore)) ' Codice operatore
+
                     cond1_upd_attivita = True ' Questa e' la prima delle 2 condizioni per aggiornare data ora e stato nella testata
             End Select
             Execute(strSQL, CLE__APP.DBTIPO.DBAZI, dbConn)
@@ -1006,12 +1008,14 @@ Public Class CLDIEIBUS
 
             ' Aggiorno stato, data e ora della testata se ci sono le condizioni richieste
             If cond1_upd_attivita And cond2_upd_attivita Then
-                strSQL = String.Format("update cract set ca_oraes={0}, ca_dataes={1}, ca_status={2} where codditt={3} and ca_codcrac={4}", _
-                                       ToSql(ConvOra60Ora100(NTSCDec(Now.Hour & "," & Now.Minute), oApp.NDecSuTempiDiba)), _
-                                       ToSql(Now.Date), _
-                                       ToSql(t.cod_stato), _
-                                       ToSql(strDitta), _
-                                       ToSql(t.cod_attivita))
+                strSQL = ApexNetLIB.EmbeddedResource.GetString(GetType(CLDIEIBUS).Assembly, "UpdateAttivita.sql", oApp.NetDir)
+
+                strSQL = strSQL.Replace("@ca_oraes@", ToSql(ConvOra60Ora100(NTSCDec(Now.Hour & "," & Now.Minute), oApp.NDecSuTempiDiba))) ' Ora eseguito
+                strSQL = strSQL.Replace("@ca_dataes@", ToSql(Now.Date)) ' Data eseguito
+                strSQL = strSQL.Replace("@ca_status@", ToSql(t.cod_stato)) ' Stato Attivita
+                strSQL = strSQL.Replace("@codditt@", ToSql(strDitta)) ' Codice della ditta
+                strSQL = strSQL.Replace("@ca_codcrac@", ToSql(t.cod_attivita)) ' Codice Attivita
+
                 Execute(strSQL, CLE__APP.DBTIPO.DBAZI, dbConn)
             End If
 
