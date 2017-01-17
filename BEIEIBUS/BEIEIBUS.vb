@@ -93,6 +93,7 @@ Public Class CLEIEIBUS
     Public strScontoMaxPercentuale As String = ""
     Public strPercentualeSuPrezzoMinimoVendita As String = ""
     Public strEsplodiKit As String = ""
+    Public strConsentiOrdiniArticoliBloccati As String = ""
 
     Public strAttivaAlert As String = ""
 
@@ -408,7 +409,7 @@ Public Class CLEIEIBUS
             '--------------------------------------------------------------	
         End Try
     End Function
-   
+
     Public Overridable Function Elabora() As Boolean
         Dim strMsgLog As String = ""
         Dim i As Integer = 0
@@ -437,6 +438,7 @@ Public Class CLEIEIBUS
             strFiltroGGDocumenti = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "FiltroGGDocumenti", "365", " ", "365").Trim
             strFiltroGGUltAcqVen = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "FiltroGGUltAcqVen", "180", " ", "180").Trim
             strIncludileadClienti = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "IncludiLeadClienti", "0", " ", "0").Trim
+            strConsentiOrdiniArticoliBloccati = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "ConsentiOrdiniArticoliBloccati", "0", " ", "0").Trim
             strScontoMaxPercentuale = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "ScontoMaxPercentuale", "", " ", "").Trim
             strDeterminazioneDescrizioneRigaOrdine = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "DeterminazioneDescrizioneRigaOrdine", "0", " ", "0").Trim
             strPercentualeSuPrezzoMinimoVendita = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "PercentualeSuPrezzoMinimoVendita", "0", " ", "0").Trim
@@ -4785,6 +4787,7 @@ Public Class CLEIEIBUS
             'Valide per la creazione di un ordine 
             oCleGsor.strContrFidoInsolinInsOrd = "N"
             oCleGsor.bConsentiCreazOrdiniCliFornBloccoFisso = True
+
             oCleGsor.bSegnalaCreazOrdiniCliFornBloccati = False ' false x non segnalare 
 
             'Valide per la creazione di un documento 
@@ -4792,6 +4795,7 @@ Public Class CLEIEIBUS
             oCleGsor.bConsentiCreazDocumCliFornBloccoFisso = True
             oCleGsor.bSegnalaCreazDocumCliFornBloccati = False  ' false x non segnalare 
             oCleGsor.bInNuovoDocSilent = True
+
 
             ' Disabilitazione blocchi di interfaccia
             oCleGsor.bDisabilitaCheckDateAnteriori = True
@@ -4805,6 +4809,11 @@ Public Class CLEIEIBUS
                 oCleGsor.bSaltaAfterInsert = False
             End If
 
+            ' Utilizzo il flag bInImportRigheOrd in maniera un po impropria solo per forzare 
+            ' l'import di ordini che contengono articoli cloccati (con ar_blocco = S). 
+            If strConsentiOrdiniArticoliBloccati <> "0" Then
+                oCleGsor.bDocDaFattChiamate = True
+            End If
 
             ' Valorizzo il codice di pagamento degli articoli deperibili
             If NTSCInt(Ordine.cod_cond_pag) <> 0 Then

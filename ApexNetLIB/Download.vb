@@ -24,7 +24,7 @@ Public Class Download
     Private mCurrentFile As String = String.Empty
 
     Public Function DownloadAndUnzip() As Boolean
-        ' Se hiamo il download senza parametri, assume che:
+        ' Se chiamo il download senza parametri, assume che:
         ' 1. La cartella in cui estrarre i files e' quella temporanea di Windows
         ' 2. L'url da cui prelevare i files e' quelle di ib (caso non gestito)
 
@@ -140,6 +140,8 @@ Public Class Download
             ReDim bBuffer(256)
             Dim iBytesRead As Integer
             Dim iTotalBytesRead As Integer
+
+            Certificates.IgnoreBadCertificates()
 
             FS = New FileStream(Location, FileMode.Create, FileAccess.Write)
             wRemote = WebRequest.Create(URL)

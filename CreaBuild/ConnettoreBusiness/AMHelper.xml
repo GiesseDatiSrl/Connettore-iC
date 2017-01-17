@@ -803,6 +803,28 @@
             <param name="DecimalString"></param>
             <returns></returns>
         </member>
+        <member name="M:Certificates.IgnoreBadCertificates">
+            <summary>
+            Ignora eventuali errori causati dall'utilizzo di certificati non validi
+            </summary>
+        </member>
+        <member name="M:Certificates.AcceptAllCertifications(System.Object,System.Security.Cryptography.X509Certificates.X509Certificate,System.Security.Cryptography.X509Certificates.X509Chain,System.Net.Security.SslPolicyErrors)">
+            <summary>
+            Ritorna sempre true per ignorare errori causati da ceritficati non validi
+            </summary>
+            <param name="sender"></param>
+            <param name="certificate"></param>
+            <param name="chain"></param>
+            <param name="policyErrors"></param>
+            <returns></returns>
+        </member>
+        <member name="M:AMHelper.WS.GetDataAM.#ctor(System.String,System.String)">
+            <summary>
+            Istanzia l'oggetto per la chiamata alle api
+            </summary>
+            <param name="AuthKeyAM">Chiave di autenticazione AM (AuthKeyAM)</param>
+            <param name="BaseUrl">Base url del servizio</param>
+        </member>
         <member name="T:AMHelper.WS.ws_meta">
             <summary>
             Metadati WS

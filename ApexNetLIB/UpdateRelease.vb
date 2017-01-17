@@ -9,6 +9,7 @@ Public Class UpdateRelease
 
     Public Shared Sub SendVersion(ByVal CodProgetto As String, ByVal VersioneConnettore As String, ByVal VersioneGestionale As String)
 
+        Certificates.IgnoreBadCertificates()
 
         ' test
         'Dim wsUrl As String = "http://test.apexnet.it/licenseManagerAPI/v1/update_versione_connettore"
