@@ -254,6 +254,7 @@ Public Class CLEIEIBUS
                     Using csv As CsvWriter = New CsvWriter(textWriter)
                         csv.Configuration.Delimiter = "|"
                         csv.Configuration.Encoding = Encoding.UTF8
+                        csv.Configuration.QuoteNoFields = True
 
                         ' Write columns
                         For Each column As DataColumn In dttTmp.Columns
@@ -1679,6 +1680,7 @@ Public Class CLEIEIBUS
                     Using csv As CsvWriter = New CsvWriter(textWriter)
                         csv.Configuration.Delimiter = "|"
                         csv.Configuration.Encoding = Encoding.UTF8
+                        csv.Configuration.QuoteNoFields = True
 
 
                         csv.WriteField("CHIAVE")
@@ -2129,6 +2131,7 @@ Public Class CLEIEIBUS
                     Using csv As CsvWriter = New CsvWriter(textWriter)
                         csv.Configuration.Delimiter = "|"
                         csv.Configuration.Encoding = Encoding.UTF8
+                        csv.Configuration.QuoteNoFields = True
 
                         csv.WriteField("CHIAVE")
                         csv.WriteField("COD_DITTA")
@@ -2208,6 +2211,7 @@ Public Class CLEIEIBUS
                     Using csv As CsvWriter = New CsvWriter(textWriter)
                         csv.Configuration.Delimiter = "|"
                         csv.Configuration.Encoding = Encoding.UTF8
+                        csv.Configuration.QuoteNoFields = True
 
                         csv.WriteField("CHIAVE")
                         csv.WriteField("COD_DITTA")

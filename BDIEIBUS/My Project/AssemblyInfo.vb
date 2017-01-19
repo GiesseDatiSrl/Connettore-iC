@@ -13,7 +13,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyTrademark("Business Excellence NET® e Business Easy NET® sono marchi registrati di NTS Informatica Srl.")> 
 <Assembly: ComVisible(False)> 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("39c39566-882c-47aa-ad9a-0a6e1ca8e6e7")> 
+<Assembly: Guid("39c39566-882c-47aa-ad9a-0a6e1ca8e6e7")>
 ' Version information for an assembly consists of the following four values:
 '
 '      Major Version
@@ -24,5 +24,5 @@ Imports System.Runtime.InteropServices
 ' You can specify all the values or you can default the Build and Revision Numbers 
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
-<Assembly: AssemblyVersion("18.3.0.0")> 
-<Assembly: AssemblyFileVersion("18.3.0.0")> 
+<Assembly: AssemblyVersion("18.3.0.1")>
+<Assembly: AssemblyFileVersion("18.3.0.1")>
