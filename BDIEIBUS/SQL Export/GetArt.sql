@@ -72,7 +72,7 @@ FROM   artico WITH (NOLOCK)
                 AND artico.ar_unmis2 = um2.tb_codumis                                                           
         LEFT JOIN tabumis conf WITH (NOLOCK)                                                                                 
             ON artico.codditt = conf.codditt                                                                   
-                AND artico.ar_confez2 = conf.tb_codumis                                                         
+                AND artico.ar_confez2 = conf.tb_codumis    
 WHERE  1=1                                                                                                       
     AND ( ar_blocco != 'S')                                                                                   
     AND ( ar_stainv = 'S' OR ar_codart = 'D' )                                                                
