@@ -191,3 +191,7 @@ CreaBuild/AMHelper.dll.config
 CreaBuild/iBUpdater.exe
 CreaBuild/iBUpdater.xml
 CreaBuild/Ionic.Zip.xml
+
+CreaBuild/iBUpdate/*.*
+CreaBuild/iBUpdateCustom/*.*
+CreaBuild/ConnettoreBusiness/*.*
