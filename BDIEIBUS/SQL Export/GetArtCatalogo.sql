@@ -12,12 +12,13 @@ SELECT ar_codart + CASE WHEN ar_gesfasi = 'S' THEN '.' + Cast(af_fase AS VARCHAR
 		END
 		    as ar_gif1,  
         af_descr,                                                                                                    
-            tb_desgmer AS xx_l1,                                                                                         
+        tb_desgmer     AS xx_l1,                                                                                         
         tb_dessgme     AS xx_l2,                                                                                         
-        NULL           AS xx_l3,                                                                                        
-        NULL           AS xx_l4,
+        cast(NULL as varchar)   AS xx_l3,                                                                                        
+        cast(NULL as varchar)   AS xx_l4,
 		tabcfam.tb_descfam AS tb_descfam,
-        tabmarc.tb_desmarc AS tb_desmarc,   
+        tabmarc.tb_desmarc AS tb_desmarc, 
+		artico.ar_gruppo   as ar_gruppo,
 		getdate() as xx_ultagg
     FROM   artico WITH (NOLOCK)                                                                                                     
         LEFT JOIN artfasi WITH (NOLOCK)                                                                                           
@@ -34,7 +35,7 @@ SELECT ar_codart + CASE WHEN ar_gesfasi = 'S' THEN '.' + Cast(af_fase AS VARCHAR
                  	AND artico.ar_famprod = tabcfam.tb_codcfam                                                               
         LEFT JOIN tabmarc WITH (NOLOCK)                                                                                             
                 ON artico.codditt = tabmarc.codditt                                                                     
-                 	AND artico.ar_codmarc = tabmarc.tb_codmarc                                                               
+                 	AND artico.ar_codmarc = tabmarc.tb_codmarc                                                             
     WHERE  1=1                                                                                                          
         AND ( ar_stainv = 'S' OR ar_codart = 'D' )                                                                   
         AND ar_codtagl = 0                                                                                           
