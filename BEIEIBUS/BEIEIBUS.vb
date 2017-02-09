@@ -93,6 +93,7 @@ Public Class CLEIEIBUS
     Public strScontoMaxPercentuale As String = ""
     Public strPercentualeSuPrezzoMinimoVendita As String = ""
     Public strEsplodiKit As String = ""
+    Public strAbilitaPrezzoUM As String = ""
     Public strConsentiOrdiniArticoliBloccati As String = ""
 
     Public strAttivaAlert As String = ""
@@ -444,6 +445,7 @@ Public Class CLEIEIBUS
             strDeterminazioneDescrizioneRigaOrdine = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "DeterminazioneDescrizioneRigaOrdine", "0", " ", "0").Trim
             strPercentualeSuPrezzoMinimoVendita = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "PercentualeSuPrezzoMinimoVendita", "0", " ", "0").Trim
             strEsplodiKit = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "EsplodiKit", "0", " ", "0").Trim
+            strAbilitaPrezzoUM = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "AbilitaPrezzoUM", "0", " ", "0").Trim
             strAccodaLog = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "AccodaLog", "0", " ", "0").Trim
             strUsaUMVendita = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "UsaUMVendita", "1", " ", "1").Trim
             strEstraiSoloListiniUMV = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "EstraiSoloListiniUMV", "0", " ", "0").Trim
@@ -4662,6 +4664,7 @@ Public Class CLEIEIBUS
         ' Valorizzo queste variabili a seconda dell'utilizzo della prima o seconda unità di misura
         Dim strUnitaMisuraP As String = ""
         Dim strUnitaMisura As String = ""
+        Dim strPrezzoUM As String = "N"
         Dim dQuantita As Decimal
         Dim dPrezzo As Decimal
         Dim dColli As Decimal
@@ -4910,26 +4913,40 @@ Public Class CLEIEIBUS
 
                 '  dTipoUM = 1   SEPA
 
+
                 Select Case dTipoUM
                     Case 1
                         'strUnitaMisuraP = r.cod_um_1
-                        dColli = NTSCDec(r.qta) ' Quantità inserita dall'agente per la presa dell'ordine
+                        dColli = NTSCDec(r.qta)     ' Quantità inserita dall'agente per la presa dell'ordine
                         strUnitaMisura = r.cod_um_1 ' Unità di misura scelta dall'agente per la presa dell'ordine
-                        dPrezzo = NTSCDec(r.prezzo) ' Prezzoscelto dall'agente durante la presa dell'ordine
-
-                        dQuantita = NTSCDec(r.qta) ' Quantità dell'UM Prncipale
+                        dPrezzo = NTSCDec(r.prezzo) ' Prezzo scelto dall'agente durante la presa dell'ordine
+                        strUnitaMisuraP = r.cod_um_1
+                        strPrezzoUM = "N"
+                        dQuantita = NTSCDec(r.qta)  ' Quantità dell'UM Principale
                     Case 2, 3
                         'strUnitaMisuraP = r.cod_um_1
-                        dColli = NTSCDec(r.qta_2) ' Quantità inserita dall'agente per la presa dell'ordine
+                        dColli = NTSCDec(r.qta_2)   ' Quantità inserita dall'agente per la presa dell'ordine
                         strUnitaMisura = r.cod_um_2 ' Unità di misura scelta dall'agente per la presa dell'ordine
-                        dPrezzo = NTSCDec(r.prezzo) ' Prezzoscelto dall'agente durante la presa dell'ordine
-
-                        dQuantita = NTSCDec(r.qta) ' Quantità dell'UM Prncipale
+                        dPrezzo = NTSCDec(r.prezzo) ' Prezzo scelto dall'agente durante la presa dell'ordine
+                        strUnitaMisuraP = r.cod_um_1
+                        strPrezzoUM = "N"
+                        dQuantita = NTSCDec(r.qta)  ' Quantità dell'UM Principale
                 End Select
 
+                ' Inverto UM1 con UM2
+                If strAbilitaPrezzoUM <> "0" Then
+                    If dttArti.Rows(0)!ar_umdapr.ToString = "S" Then
+                        dColli = NTSCDec(r.qta)
+                        strUnitaMisura = r.cod_um_1
+                        dPrezzo = NTSCDec(r.prezzo)
+                        strUnitaMisuraP = r.cod_um_2
+                        dQuantita = NTSCDec(r.qta_2)
+                        strPrezzoUM = "S"
+                    End If
+                End If
 
-                ' Ripristino i newline
-                If String.IsNullOrEmpty(r.note) Then
+                    ' Ripristino i newline
+                    If String.IsNullOrEmpty(r.note) Then
                     DescNote = r.note
                 Else
                     DescNote = r.note.Replace(CLDIEIBUS.iBNewline, vbNewLine)
@@ -4998,13 +5015,12 @@ Public Class CLEIEIBUS
                     !ec_note = Trim(NTSCStr(!ec_note) & " " & NTSCStr(r.note))
 
                     !ec_unmis = NTSCStr(strUnitaMisura)
-
+                    !ec_ump = NTSCStr(strUnitaMisuraP)
                     !ec_colli = NTSCDec(dColli)
                     !ec_quant = NTSCDec(dQuantita)
 
+                    !ec_umprz = strPrezzoUM
 
-                    ' !ec_quant = NTSCDec(dColli) ' SEPA
-                    ' !ec_colli = NTSCDec(dQuantita) ' SEPA
 
                     ' Se ho attivato l'esplosione dei kit non devo impostare il prezzo dell'articolo
                     If strEsplodiKit <> "0" Then
