@@ -57,6 +57,7 @@ WHERE  1=1
     AND scaden.sc_conto = anagra.an_conto
     AND an_tipo <> 'S'
     AND an_status = 'A'
+	-- AND sc_codincdiff = 0 Se si gestiscono incassi differiti usare questo filtro
     AND sc_annpar > 0 
 	-- AND sc_numpar > 0
 	    AND ( ( an_tipo = 'C' AND @tipocf = 'C' ) OR ( an_tipo = 'F'  AND @tipocf = 'F' ) OR ( an_tipo <> 'S'  AND @tipocf = 'CF' ) )

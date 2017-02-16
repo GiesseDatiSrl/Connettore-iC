@@ -4900,7 +4900,7 @@ Public Class CLEIEIBUS
                     Case "1" : strStasino = "O"   'omaggio con rivalsa
                     Case "2" : strStasino = "P"   'omaggio senza rivalsa
                     Case "3" : strStasino = "M"   'sconto merce
-                    Case "4" : strStasino = "X"   'sconto merce NC
+                    Case "4" : strStasino = "X"   'sconto merce NC (non viene conteggiato sul totale dell'ordine)
                 End Select
 
                 ' Gestisco il tipo unita di misura
