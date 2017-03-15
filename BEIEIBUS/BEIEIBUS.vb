@@ -4917,16 +4917,18 @@ Public Class CLEIEIBUS
                 Select Case dTipoUM
                     Case 1
                         'strUnitaMisuraP = r.cod_um_1
-                        dColli = NTSCDec(r.qta)     ' Quantità inserita dall'agente per la presa dell'ordine
                         strUnitaMisura = r.cod_um_1 ' Unità di misura scelta dall'agente per la presa dell'ordine
+                        'dColli = NTSCDec(r.qta)    ' Quantità inserita dall'agente per la presa dell'ordine (OBSOLETO)
+                        dColli = NTSCDec(0)         ' In Business, se prendo l'ordine in UM Principale, il numero di colli viene impostato a 0
                         dPrezzo = NTSCDec(r.prezzo) ' Prezzo scelto dall'agente durante la presa dell'ordine
                         strUnitaMisuraP = r.cod_um_1
                         strPrezzoUM = "N"
                         dQuantita = NTSCDec(r.qta)  ' Quantità dell'UM Principale
                     Case 2, 3
                         'strUnitaMisuraP = r.cod_um_1
-                        dColli = NTSCDec(r.qta_2)   ' Quantità inserita dall'agente per la presa dell'ordine
                         strUnitaMisura = r.cod_um_2 ' Unità di misura scelta dall'agente per la presa dell'ordine
+                        dColli = NTSCDec(r.qta_2)   ' Quantità inserita dall'agente per la presa dell'ordine
+
                         dPrezzo = NTSCDec(r.prezzo) ' Prezzo scelto dall'agente durante la presa dell'ordine
                         strUnitaMisuraP = r.cod_um_1
                         strPrezzoUM = "N"
