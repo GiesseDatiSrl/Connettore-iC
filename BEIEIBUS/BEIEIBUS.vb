@@ -94,6 +94,7 @@ Public Class CLEIEIBUS
     Public strPercentualeSuPrezzoMinimoVendita As String = ""
     Public strEsplodiKit As String = ""
     Public strAbilitaPrezzoUM As String = ""
+    Public strInvertiPrioritaSconti As String = ""
     Public strConsentiOrdiniArticoliBloccati As String = ""
 
     Public strAttivaAlert As String = ""
@@ -446,6 +447,7 @@ Public Class CLEIEIBUS
             strPercentualeSuPrezzoMinimoVendita = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "PercentualeSuPrezzoMinimoVendita", "0", " ", "0").Trim
             strEsplodiKit = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "EsplodiKit", "0", " ", "0").Trim
             strAbilitaPrezzoUM = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "AbilitaPrezzoUM", "0", " ", "0").Trim
+            strInvertiPrioritaSconti = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "InvertiPrioritaSconti", "0", " ", "0").Trim
             strAccodaLog = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "AccodaLog", "0", " ", "0").Trim
             strUsaUMVendita = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "UsaUMVendita", "1", " ", "1").Trim
             strEstraiSoloListiniUMV = oCldIbus.GetSettingBusDitt(strDittaCorrente, "Bsieibus", "Opzioni", ".", "EstraiSoloListiniUMV", "0", " ", "0").Trim
@@ -4072,6 +4074,10 @@ Public Class CLEIEIBUS
                     strPrior = dtrT!xx_prior1.ToString
                 Else
                     strPrior = dtrT!xx_prior2.ToString
+                End If
+
+                If strInvertiPrioritaSconti <> "0" Then
+                    strPrior = (CInt(strPrior) * -1).ToString()
                 End If
 
                 sbFile.Append(strDittaCorrente & "§" & ConvStr(dtrT!ar_codart) & "§" & ConvStr(dtrT!so_conto) & "§" & ConvStr(dtrT!so_clscan) & "§" & ConvStr(dtrT!so_clscar) & "§" & ConvStr(dtrT!so_codtpro) & "§" & ConvStr(dtrT!so_daquant) & "§" & ConvData(dtrT!so_datagg, False) & "|" & _
