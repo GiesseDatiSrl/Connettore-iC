@@ -4070,9 +4070,11 @@ Public Class CLEIEIBUS
                     "QUANTITA_INIZIO|QUANTITA_FINE|DATA_INIZIO|DATA_FINE|PRIORITA|SCONTO1|SCONTO2|SCONTO3|SCONTO4|" & _
                     "SCONTO5|SCONTO6|TIPO_SCONTO1|TIPO_SCONTO2|TIPO_SCONTO3|TIPO_SCONTO4|TIPO_SCONTO5|TIPO_SCONTO6|DAT_ULT_MOD" & vbCrLf)
             For Each dtrT As DataRow In dttTmp.Rows
-                If oApp.oGvar.strPriorSconti <> "ACBDFE" Then
+
+
+                If oApp.oGvar.strPriorSconti <> "ACBDFE" Then ' priorità = ACBDFE
                     strPrior = dtrT!xx_prior1.ToString
-                Else
+                Else ' priorità = ABCDEF
                     strPrior = dtrT!xx_prior2.ToString
                 End If
 
@@ -4080,33 +4082,33 @@ Public Class CLEIEIBUS
                     strPrior = (CInt(strPrior) * -1).ToString()
                 End If
 
-                sbFile.Append(strDittaCorrente & "§" & ConvStr(dtrT!ar_codart) & "§" & ConvStr(dtrT!so_conto) & "§" & ConvStr(dtrT!so_clscan) & "§" & ConvStr(dtrT!so_clscar) & "§" & ConvStr(dtrT!so_codtpro) & "§" & ConvStr(dtrT!so_daquant) & "§" & ConvData(dtrT!so_datagg, False) & "|" & _
-                                strDittaCorrente & "|" & _
-                                IIf(ConvStr(dtrT!ar_codart) = "0", "", ConvStr(dtrT!ar_codart)).ToString & "|" & _
-                                "0" & "|" & _
-                                IIf(ConvStr(dtrT!so_conto) = "0", "", ConvStr(dtrT!so_conto)).ToString & "|" & _
-                                IIf(ConvStr(dtrT!so_clscar) = "0", "", ConvStr(dtrT!so_clscar)).ToString & "|" & _
-                                ConvStr(dtrT!tb_descsar) & "|" & _
-                                IIf(ConvStr(dtrT!so_clscan) = "0", "", ConvStr(dtrT!so_clscan)).ToString & "|" & _
-                                ConvStr(dtrT!tb_descscl) & "|" & _
-                                IIf(ConvStr(dtrT!so_codtpro) = "0", "", ConvStr(dtrT!so_codtpro)).ToString & "|" & _
-                                NTSCDec(dtrT!so_daquant).ToString("0.00") & "|" & _
-                                NTSCDec(dtrT!so_aquant).ToString("0.00") & "|" & _
-                                ConvData(dtrT!so_datagg, False) & "|" & _
-                                ConvData(dtrT!so_datscad, False) & "|" & _
-                                strPrior & "|" & _
-                                NTSCDec(dtrT!so_scont1).ToString("0.00") & "|" & _
-                                NTSCDec(dtrT!so_scont2).ToString("0.00") & "|" & _
-                                NTSCDec(dtrT!so_scont3).ToString("0.00") & "|" & _
-                                NTSCDec(dtrT!so_scont4).ToString("0.00") & "|" & _
-                                NTSCDec(dtrT!so_scont5).ToString("0.00") & "|" & _
-                                NTSCDec(dtrT!so_scont6).ToString("0.00") & "|" & _
-                                strTrattaSc1 & "|" & _
-                                strTrattaSc2 & "|" & _
-                                strTrattaSc3 & "|" & _
-                                strTrattaSc4 & "|" & _
-                                strTrattaSc5 & "|" & _
-                                strTrattaSc5 & "|" & _
+                sbFile.Append(strDittaCorrente & "§" & ConvStr(dtrT!ar_codart) & "§" & ConvStr(dtrT!so_conto) & "§" & ConvStr(dtrT!so_clscan) & "§" & ConvStr(dtrT!so_clscar) & "§" & ConvStr(dtrT!so_codtpro) & "§" & ConvStr(dtrT!so_daquant) & "§" & ConvData(dtrT!so_datagg, False) & "|" &
+                                strDittaCorrente & "|" &
+                                IIf(ConvStr(dtrT!ar_codart) = "0", "", ConvStr(dtrT!ar_codart)).ToString & "|" &
+                                "0" & "|" &
+                                IIf(ConvStr(dtrT!so_conto) = "0", "", ConvStr(dtrT!so_conto)).ToString & "|" &
+                                IIf(ConvStr(dtrT!so_clscar) = "0", "", ConvStr(dtrT!so_clscar)).ToString & "|" &
+                                ConvStr(dtrT!tb_descsar) & "|" &
+                                IIf(ConvStr(dtrT!so_clscan) = "0", "", ConvStr(dtrT!so_clscan)).ToString & "|" &
+                                ConvStr(dtrT!tb_descscl) & "|" &
+                                IIf(ConvStr(dtrT!so_codtpro) = "0", "", ConvStr(dtrT!so_codtpro)).ToString & "|" &
+                                NTSCDec(dtrT!so_daquant).ToString("0.00") & "|" &
+                                NTSCDec(dtrT!so_aquant).ToString("0.00") & "|" &
+                                ConvData(dtrT!so_datagg, False) & "|" &
+                                ConvData(dtrT!so_datscad, False) & "|" &
+                                strPrior & "|" &
+                                NTSCDec(dtrT!so_scont1).ToString("0.00") & "|" &
+                                NTSCDec(dtrT!so_scont2).ToString("0.00") & "|" &
+                                NTSCDec(dtrT!so_scont3).ToString("0.00") & "|" &
+                                NTSCDec(dtrT!so_scont4).ToString("0.00") & "|" &
+                                NTSCDec(dtrT!so_scont5).ToString("0.00") & "|" &
+                                NTSCDec(dtrT!so_scont6).ToString("0.00") & "|" &
+                                strTrattaSc1 & "|" &
+                                strTrattaSc2 & "|" &
+                                strTrattaSc3 & "|" &
+                                strTrattaSc4 & "|" &
+                                strTrattaSc5 & "|" &
+                                strTrattaSc5 & "|" &
                                 ConvData(dtrT!so_ultagg, True) & vbCrLf)
             Next
 

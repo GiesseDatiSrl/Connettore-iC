@@ -38,12 +38,12 @@ SELECT
                 CASE WHEN so_conto <> 0 THEN 
                         CASE WHEN so_codart <> '' AND so_clscan = 0 AND so_clscar = 0 THEN 2
                         ELSE CASE WHEN so_codart = '' AND so_clscan = 0 AND so_clscar <> 0 THEN 4
-                        ELSE CASE WHEN so_codart = '' AND so_clscan = 0 AND so_clscar = 0 THEN 10
+                        ELSE CASE WHEN so_codart = '' AND so_clscan = 0 AND so_clscar = 0 THEN 12 -- ex 10
                         END END END 
                     ELSE 
                         CASE WHEN so_codart <> '' AND so_clscan <> 0 AND so_clscar = 0 THEN 6
                         ELSE CASE WHEN so_codart = '' AND so_clscan <> 0 AND so_clscar <> 0 THEN 8
-                        ELSE CASE WHEN so_codart <> '' AND so_clscan = 0 AND so_clscar = 0 THEN 12
+                        ELSE CASE WHEN so_codart <> '' AND so_clscan = 0 AND so_clscar = 0 THEN 10 -- ex 12
                         END END END 
                     END 
             END as xx_prior1,
