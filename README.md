@@ -3,8 +3,7 @@ ConnettoreiB
 Questo repositori contiene i sorgenti del connettore di iB.
 Tutta la documentazione relativa al connettore è disponibile qui:
 
-* https://www.giessedati.it/doc/ib/
-
+* https://github.com/wedoit-io/ConnettoreiB/wiki
 
 ## Rimanere aggiornati con le versioni di rilascio
 Per rimanere aggiornati su tutti i rilasci effettuati del connettore sono possibili 2 modalità:
